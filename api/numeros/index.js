@@ -1,4 +1,4 @@
-const { supabase } = require('../lib/supabase');
+const { supabase } = require('../../lib/supabase');
 
 // GET  /api/numeros — listar todos
 // POST /api/numeros — adicionar

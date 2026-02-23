@@ -7,7 +7,7 @@ const { supabase } = require('../lib/supabase');
 
 // Número de fallback caso o banco esteja fora ou sem números
 // TROCAR pelo número principal de vocês ↓
-const FALLBACK_NUMBER = '5511999999999';
+const FALLBACK_NUMBER = '5548999632212 ';
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
