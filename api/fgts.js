@@ -7,12 +7,17 @@ const { supabase } = require('../lib/supabase');
 
 // Número de fallback caso o banco esteja fora ou sem números
 // TROCAR pelo número principal de vocês ↓
-const FALLBACK_NUMBER = '5548999632212 ';
+const FALLBACK_NUMBER = '5548999632212';
+
+// Mensagem pré-preenchida que aparece no WhatsApp
+const MENSAGEM = '(b05)Olá Novo Horizonte! Quero sacar meu FGTS e receber agora!';
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const textParam = `?text=${encodeURIComponent(MENSAGEM)}`;
 
   try {
     // Buscar todos os números ativos
@@ -25,13 +30,13 @@ module.exports = async function handler(req, res) {
     if (!numeros || numeros.length === 0) {
       // Fallback — sem números cadastrados
       console.log(`[FALLBACK] Nenhum número cadastrado, usando fallback`);
-      return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}`);
+      return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
     }
 
     // Escolher um aleatório
     const sorteado = numeros[Math.floor(Math.random() * numeros.length)];
     const limpo = sorteado.numero.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/55${limpo}`;
+    const whatsappUrl = `https://wa.me/55${limpo}${textParam}`;
 
     console.log(`[REDIRECT] ${new Date().toISOString()} → ${sorteado.numero} → ${whatsappUrl}`);
 
@@ -49,6 +54,6 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     console.error('[FGTS ERROR]', err);
     // Em caso de QUALQUER erro, usa o fallback para não perder leads
-    return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}`);
+    return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
   }
 };
