@@ -5,6 +5,31 @@ import './App.css';
 
 const REDIRECT_PATH = '/fgts';
 
+// ── Traduzir erros do Supabase ──
+function traduzirErro(msg) {
+  const map = {
+    'Invalid login credentials': 'Email ou senha incorretos.',
+    'Email not confirmed': 'Email não confirmado. Verifique sua caixa de entrada.',
+    'User not found': 'Usuário não encontrado.',
+    'Invalid email or password': 'Email ou senha inválidos.',
+    'Too many requests': 'Muitas tentativas. Aguarde um momento.',
+    'Network request failed': 'Erro de conexão. Verifique sua internet.',
+  };
+  return map[msg] || msg;
+}
+
+// ── Formatar número para exibição ──
+function formatarNumero(num) {
+  const limpo = num.replace(/\D/g, '');
+  if (limpo.length === 11) {
+    return `(${limpo.slice(0, 2)}) ${limpo.slice(2, 7)}-${limpo.slice(7)}`;
+  }
+  if (limpo.length === 10) {
+    return `(${limpo.slice(0, 2)}) ${limpo.slice(2, 6)}-${limpo.slice(6)}`;
+  }
+  return num;
+}
+
 function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -19,9 +44,19 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [testResult, setTestResult] = useState('');
   const [testing, setTesting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [toast, setToast] = useState(null);
   const inputRef = useRef(null);
+  const toastTimeout = useRef(null);
 
   const redirectUrl = window.location.origin + REDIRECT_PATH;
+
+  // ── Toast ──
+  const showToast = (message, type = 'success') => {
+    if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    setToast({ message, type });
+    toastTimeout.current = setTimeout(() => setToast(null), 3000);
+  };
 
   // ── Auth ──
   useEffect(() => {
@@ -46,7 +81,7 @@ function App() {
       password: loginPassword,
     });
     if (error) {
-      setLoginError(error.message);
+      setLoginError(traduzirErro(error.message));
     }
     setLoginLoading(false);
   };
@@ -82,18 +117,23 @@ function App() {
     try {
       await addNumero(value, getAccessToken());
       setInput('');
+      showToast(`Número ${formatarNumero(value)} adicionado!`);
       fetchData();
       inputRef.current?.focus();
     } catch (err) {
+      showToast('Erro ao adicionar número.', 'error');
       console.error(err);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, numero) => {
     try {
       await deleteNumero(id, getAccessToken());
+      showToast(`Número ${formatarNumero(numero)} removido.`, 'error');
+      setConfirmDelete(null);
       fetchData();
     } catch (err) {
+      showToast('Erro ao remover número.', 'error');
       console.error(err);
     }
   };
@@ -101,6 +141,7 @@ function App() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(redirectUrl).then(() => {
       setCopied(true);
+      showToast('Link copiado!');
       setTimeout(() => setCopied(false), 2000);
     });
   };
@@ -117,7 +158,6 @@ function App() {
         if (location) {
           results.push(location);
         } else {
-          // fallback: buscar via API random
           const apiRes = await fetch('/api/numeros');
           const data = await apiRes.json();
           if (data.length > 0) {
@@ -144,12 +184,18 @@ function App() {
     return found ? found.total : 0;
   };
 
+  const getMaxCliques = () => {
+    if (!stats?.porNumero || stats.porNumero.length === 0) return 1;
+    return Math.max(...stats.porNumero.map(s => s.total), 1);
+  };
+
   // ── Loading ──
   if (authLoading) {
     return (
       <div className="page">
         <div className="login-container">
-          <p style={{ textAlign: 'center', color: '#888' }}>Carregando...</p>
+          <div className="loading-spinner"></div>
+          <p style={{ textAlign: 'center', color: '#888', marginTop: '16px' }}>Carregando...</p>
         </div>
       </div>
     );
@@ -160,24 +206,31 @@ function App() {
     return (
       <div className="page">
         <div className="login-container">
+          <div className="login-icon">🔒</div>
           <h1>Random Disparo</h1>
           <p className="subtitle">Faça login para acessar o painel</p>
           <form className="login-form" onSubmit={handleLogin}>
-            <input
-              type="email"
-              placeholder="E-mail"
-              value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
-              required
-              autoFocus
-            />
-            <input
-              type="password"
-              placeholder="Senha"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              required
-            />
+            <div className="input-group">
+              <span className="input-icon">✉</span>
+              <input
+                type="email"
+                placeholder="E-mail"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div className="input-group">
+              <span className="input-icon">🔑</span>
+              <input
+                type="password"
+                placeholder="Senha"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+              />
+            </div>
             {loginError && <p className="login-error">{loginError}</p>}
             <button type="submit" className="btn-login" disabled={loginLoading}>
               {loginLoading ? 'Entrando...' : 'Entrar'}
@@ -188,11 +241,34 @@ function App() {
     );
   }
 
+  const maxCliques = getMaxCliques();
+
   // ── Admin Panel ──
   return (
     <div className="page">
+      {/* Toast */}
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          <span>{toast.type === 'success' ? '✓' : '✕'}</span> {toast.message}
+        </div>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Remover número?</h3>
+            <p>Tem certeza que deseja remover o número <strong>{formatarNumero(confirmDelete.numero)}</strong>?</p>
+            <div className="modal-buttons">
+              <button className="btn-cancel" onClick={() => setConfirmDelete(null)}>Cancelar</button>
+              <button className="btn-confirm-delete" onClick={() => handleDelete(confirmDelete.id, confirmDelete.numero)}>Remover</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="top-bar">
-        <span className="user-email">{session.user.email}</span>
+        <span className="user-email">👤 {session.user.email}</span>
         <button className="btn-logout" onClick={handleLogout}>Sair</button>
       </div>
       <h1>Random Disparo</h1>
@@ -208,7 +284,7 @@ function App() {
         <div className="redirect-link-box">
           <span className="redirect-link">{redirectUrl}</span>
           <button className="btn-copy-main" onClick={handleCopyLink}>
-            {copied ? '✓ Copiado!' : 'Copiar'}
+            {copied ? '✓ Copiado!' : '📋 Copiar'}
           </button>
         </div>
 
@@ -232,7 +308,7 @@ function App() {
           onClick={handleTest}
           disabled={testing || numeros.length === 0}
         >
-          {testing ? 'Testando...' : 'Testar Randomização'}
+          {testing ? '⏳ Testando...' : '🔀 Testar Randomização'}
         </button>
         {testResult && (
           <div className="test-result">
@@ -252,35 +328,44 @@ function App() {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Ex: 11999998888"
+            placeholder="Ex: 48999998888"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <button className="btn-add" onClick={handleAdd}>Adicionar</button>
+          <button className="btn-add" onClick={handleAdd}>+ Adicionar</button>
         </div>
 
         <div className="numbers-list">
           {numeros.length === 0 && (
             <div className="empty-msg">Nenhum número ativo. Adicione acima.</div>
           )}
-          {numeros.map((n, idx) => (
-            <div key={n.id} className="number-item">
-              <span className="num-index">{idx + 1}.</span>
-              <span className="num-value">{n.numero}</span>
-              <span className="num-redirects" title="Redirects para este número">
-                {getNumeroStats(n.numero)} cliques
-              </span>
-              <span className="num-status">Ativo</span>
-              <button
-                className="btn-remove"
-                onClick={() => handleDelete(n.id)}
-                title="Remover (banido)"
-              >
-                &times;
-              </button>
-            </div>
-          ))}
+          {numeros.map((n, idx) => {
+            const cliques = getNumeroStats(n.numero);
+            const percent = maxCliques > 0 ? (cliques / maxCliques) * 100 : 0;
+            return (
+              <div key={n.id} className="number-item">
+                <span className="num-index">{idx + 1}.</span>
+                <div className="num-info">
+                  <div className="num-top-row">
+                    <span className="num-value">{formatarNumero(n.numero)}</span>
+                    <span className="num-redirects">{cliques} cliques</span>
+                    <span className="num-status">Ativo</span>
+                    <button
+                      className="btn-remove"
+                      onClick={() => setConfirmDelete({ id: n.id, numero: n.numero })}
+                      title="Remover número"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                  <div className="num-bar-bg">
+                    <div className="num-bar-fill" style={{ width: `${percent}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
