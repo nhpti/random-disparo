@@ -5,7 +5,7 @@ const { supabase } = require('../lib/supabase');
 // GET /bolsa → pega número aleatório → 302 → wa.me
 // ══════════════════════════════════════════════════════
 
-const FALLBACK_NUMBER = '5548999632212';
+const FALLBACK_NUMBER = '5548999970762';
 
 const MENSAGEM = 'Olá Novo Horizonte! Quero saber sobre o Bolsa Família!';
 
