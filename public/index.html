@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Random Disparo — CLT & FGTS</title>
   </head>
-  <body>
+  <body class="dark">
     <div id="root"></div>
+    <script>
+      try {
+        var dm = JSON.parse(localStorage.getItem('darkMode'));
+        if (dm === false) document.body.className = 'light';
+      } catch(e) {}
+    </script>
   </body>
 </html>

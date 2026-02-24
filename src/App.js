@@ -46,16 +46,36 @@ function App() {
   const [testing, setTesting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [copiedNumero, setCopiedNumero] = useState(null);
   const inputRef = useRef(null);
   const toastTimeout = useRef(null);
 
   const redirectUrl = window.location.origin + REDIRECT_PATH;
+
+  // ── Dark Mode ──
+  useEffect(() => {
+    document.body.className = darkMode ? 'dark' : 'light';
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
 
   // ── Toast ──
   const showToast = (message, type = 'success') => {
     if (toastTimeout.current) clearTimeout(toastTimeout.current);
     setToast({ message, type });
     toastTimeout.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  // ── Copiar número ──
+  const handleCopyNumero = (numero) => {
+    navigator.clipboard.writeText(numero).then(() => {
+      setCopiedNumero(numero);
+      showToast(`Número ${formatarNumero(numero)} copiado!`);
+      setTimeout(() => setCopiedNumero(null), 2000);
+    });
   };
 
   // ── Auth ──
@@ -195,7 +215,7 @@ function App() {
       <div className="page">
         <div className="login-container">
           <div className="loading-spinner"></div>
-          <p style={{ textAlign: 'center', color: '#888', marginTop: '16px' }}>Carregando...</p>
+          <p style={{ textAlign: 'center', marginTop: '16px' }} className="text-muted">Carregando...</p>
         </div>
       </div>
     );
@@ -268,6 +288,9 @@ function App() {
       )}
 
       <div className="top-bar">
+        <button className="btn-theme" onClick={() => setDarkMode(!darkMode)} title={darkMode ? 'Modo claro' : 'Modo escuro'}>
+          {darkMode ? '☀️' : '🌙'}
+        </button>
         <span className="user-email">👤 {session.user.email}</span>
         <button className="btn-logout" onClick={handleLogout}>Sair</button>
       </div>
@@ -372,6 +395,13 @@ function App() {
                 <div className="num-info">
                   <div className="num-top-row">
                     <span className="num-value">{formatarNumero(n.numero)}</span>
+                    <button
+                      className="btn-copy-num"
+                      onClick={() => handleCopyNumero(n.numero)}
+                      title="Copiar número"
+                    >
+                      {copiedNumero === n.numero ? '✓' : '📋'}
+                    </button>
                     <span className="num-redirects">{cliques} hoje</span>
                     <span className="num-status">Ativo</span>
                     <button
