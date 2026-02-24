@@ -7,7 +7,7 @@ const { supabase } = require('../lib/supabase');
 
 const FALLBACK_NUMBER = '5548999970762';
 
-const MENSAGEM = 'Olá Novo Horizonte! Quero saber sobre o Bolsa Família!';
+const MENSAGEM = '(cj1) Olá, vim através do Canal do Jefinho e quero saber mais sobre o empréstimo bolsa família';
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
