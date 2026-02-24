@@ -88,7 +88,7 @@ Se quiser usar um domínio próprio (ex: outro domínio novo), configure em **Se
 
 ## API Endpoints
 
-| Método   | Rota               | Descrição                        |
+| Método   | Rota               | Descrição                       |
 |----------|--------------------|---------------------------------|
 | `GET`    | `/fgts`            | Redirect público → WhatsApp     |
 | `GET`    | `/api/numeros`     | Listar números ativos           |

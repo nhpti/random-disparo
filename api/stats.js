@@ -20,14 +20,15 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Total de redirects
+    const hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Total de redirects (todos os tempos)
     const { count: totalRedirects, error: e1 } = await supabase
       .from('redirect_log')
       .select('*', { count: 'exact', head: true });
     if (e1) throw e1;
 
-    // Redirects de hoje
-    const hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    // Redirects de hoje (total)
     const { count: redirectsHoje, error: e2 } = await supabase
       .from('redirect_log')
       .select('*', { count: 'exact', head: true })
@@ -35,25 +36,48 @@ module.exports = async function handler(req, res) {
       .lt('created_at', `${hoje}T23:59:59.999`);
     if (e2) throw e2;
 
-    // Contagem por número
-    const { data: logs, error: e3 } = await supabase
+    // Cliques de HOJE por número (só hoje, reseta todo dia)
+    const { data: logsHoje, error: e3 } = await supabase
       .from('redirect_log')
-      .select('numero');
+      .select('numero')
+      .gte('created_at', `${hoje}T00:00:00`)
+      .lt('created_at', `${hoje}T23:59:59.999`);
     if (e3) throw e3;
 
-    // Agrupar manualmente (Supabase JS client não tem GROUP BY direto)
-    const contagem = {};
-    for (const log of logs || []) {
-      contagem[log.numero] = (contagem[log.numero] || 0) + 1;
+    const contagemHoje = {};
+    for (const log of logsHoje || []) {
+      contagemHoje[log.numero] = (contagemHoje[log.numero] || 0) + 1;
     }
-    const porNumero = Object.entries(contagem)
+    const porNumero = Object.entries(contagemHoje)
       .map(([numero, total]) => ({ numero, total }))
       .sort((a, b) => b.total - a.total);
+
+    // Histórico dos últimos 7 dias
+    const historico = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dia = d.toISOString().split('T')[0];
+
+      const { count, error: eH } = await supabase
+        .from('redirect_log')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', `${dia}T00:00:00`)
+        .lt('created_at', `${dia}T23:59:59.999`);
+      if (eH) throw eH;
+
+      historico.push({
+        data: dia,
+        dia: `${dia.slice(8, 10)}/${dia.slice(5, 7)}`, // DD/MM
+        cliques: count || 0,
+      });
+    }
 
     return res.status(200).json({
       totalRedirects: totalRedirects || 0,
       redirectsHoje: redirectsHoje || 0,
       porNumero,
+      historico,
     });
   } catch (err) {
     console.error(err);

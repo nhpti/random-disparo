@@ -293,7 +293,7 @@ function App() {
             <span className="stat-value">{stats?.totalRedirects ?? '—'}</span>
             <span className="stat-label">Redirects total</span>
           </div>
-          <div className="stat-card">
+          <div className="stat-card stat-card-highlight">
             <span className="stat-value">{stats?.redirectsHoje ?? '—'}</span>
             <span className="stat-label">Hoje</span>
           </div>
@@ -302,6 +302,29 @@ function App() {
             <span className="stat-label">Números ativos</span>
           </div>
         </div>
+
+        {/* Histórico dos últimos 7 dias */}
+        {stats?.historico && stats.historico.length > 0 && (
+          <div className="historico-section">
+            <h3 className="historico-title">📊 Últimos 7 dias</h3>
+            <div className="historico-chart">
+              {stats.historico.map((h, i) => {
+                const maxHist = Math.max(...stats.historico.map(x => x.cliques), 1);
+                const barHeight = (h.cliques / maxHist) * 100;
+                const isHoje = i === stats.historico.length - 1;
+                return (
+                  <div key={h.data} className={`historico-bar-col ${isHoje ? 'historico-hoje' : ''}`}>
+                    <span className="historico-valor">{h.cliques}</span>
+                    <div className="historico-bar-bg">
+                      <div className="historico-bar-fill" style={{ height: `${barHeight}%` }}></div>
+                    </div>
+                    <span className="historico-dia">{isHoje ? 'Hoje' : h.dia}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <button
           className="btn-test"
@@ -349,7 +372,7 @@ function App() {
                 <div className="num-info">
                   <div className="num-top-row">
                     <span className="num-value">{formatarNumero(n.numero)}</span>
-                    <span className="num-redirects">{cliques} cliques</span>
+                    <span className="num-redirects">{cliques} hoje</span>
                     <span className="num-status">Ativo</span>
                     <button
                       className="btn-remove"
