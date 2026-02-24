@@ -1,13 +1,20 @@
 const { supabase } = require('../../lib/supabase');
+const { verifyAuth } = require('../../lib/auth');
 
-// GET  /api/numeros — listar todos
-// POST /api/numeros — adicionar
+// GET  /api/numeros — listar todos (autenticado)
+// POST /api/numeros — adicionar (autenticado)
 module.exports = async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Verificar autenticação
+  const user = await verifyAuth(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Não autorizado. Faça login.' });
+  }
 
   try {
     if (req.method === 'GET') {

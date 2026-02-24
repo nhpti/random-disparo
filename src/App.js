@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getNumeros, addNumero, deleteNumero, getStats } from './api';
+import { supabase } from './supabaseClient';
 import './App.css';
 
 const REDIRECT_PATH = '/fgts';
 
 function App() {
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+
   const [numeros, setNumeros] = useState([]);
   const [input, setInput] = useState('');
   const [stats, setStats] = useState(null);
@@ -15,27 +23,64 @@ function App() {
 
   const redirectUrl = window.location.origin + REDIRECT_PATH;
 
+  // ── Auth ──
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoginLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
+    if (error) {
+      setLoginError(error.message);
+    }
+    setLoginLoading(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const getAccessToken = () => session?.access_token || '';
+
   const fetchData = useCallback(async () => {
+    if (!session) return;
     try {
-      const [nums, st] = await Promise.all([getNumeros(), getStats()]);
+      const token = session.access_token;
+      const [nums, st] = await Promise.all([getNumeros(token), getStats(token)]);
       setNumeros(nums);
       setStats(st);
     } catch (err) {
       console.error(err);
     }
-  }, []);
+  }, [session]);
 
   useEffect(() => {
+    if (!session) return;
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, session]);
 
   const handleAdd = async () => {
     const value = input.trim();
     if (!value) return;
     try {
-      await addNumero(value);
+      await addNumero(value, getAccessToken());
       setInput('');
       fetchData();
       inputRef.current?.focus();
@@ -46,7 +91,7 @@ function App() {
 
   const handleDelete = async (id) => {
     try {
-      await deleteNumero(id);
+      await deleteNumero(id, getAccessToken());
       fetchData();
     } catch (err) {
       console.error(err);
@@ -99,8 +144,57 @@ function App() {
     return found ? found.total : 0;
   };
 
+  // ── Loading ──
+  if (authLoading) {
+    return (
+      <div className="page">
+        <div className="login-container">
+          <p style={{ textAlign: 'center', color: '#888' }}>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Login Screen ──
+  if (!session) {
+    return (
+      <div className="page">
+        <div className="login-container">
+          <h1>Random Disparo</h1>
+          <p className="subtitle">Faça login para acessar o painel</p>
+          <form className="login-form" onSubmit={handleLogin}>
+            <input
+              type="email"
+              placeholder="E-mail"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              required
+              autoFocus
+            />
+            <input
+              type="password"
+              placeholder="Senha"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              required
+            />
+            {loginError && <p className="login-error">{loginError}</p>}
+            <button type="submit" className="btn-login" disabled={loginLoading}>
+              {loginLoading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Admin Panel ──
   return (
     <div className="page">
+      <div className="top-bar">
+        <span className="user-email">{session.user.email}</span>
+        <button className="btn-logout" onClick={handleLogout}>Sair</button>
+      </div>
       <h1>Random Disparo</h1>
       <p className="subtitle">Gerenciador de números ativos — CLT & FGTS</p>
 
