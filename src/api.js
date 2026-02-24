@@ -1,6 +1,7 @@
 // Na Vercel, as API routes ficam no mesmo domínio, então não precisa de URL base
 const API = '';
 
+// ── CLT & FGTS ──
 export async function getNumeros(token) {
   const res = await fetch(`${API}/api/numeros`, {
     headers: { 'Authorization': `Bearer ${token}` },
@@ -33,6 +34,45 @@ export async function deleteNumero(id, token) {
 
 export async function getStats(token) {
   const res = await fetch(`${API}/api/stats`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar stats');
+  return res.json();
+}
+
+// ── BOLSA FAMÍLIA ──
+export async function getNumerosBolsa(token) {
+  const res = await fetch(`${API}/api/numeros-bolsa`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar números');
+  return res.json();
+}
+
+export async function addNumeroBolsa(numero, token) {
+  const res = await fetch(`${API}/api/numeros-bolsa`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ numero }),
+  });
+  if (!res.ok) throw new Error('Erro ao adicionar');
+  return res.json();
+}
+
+export async function deleteNumeroBolsa(id, token) {
+  const res = await fetch(`${API}/api/numeros-bolsa/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao remover');
+  return res.json();
+}
+
+export async function getStatsBolsa(token) {
+  const res = await fetch(`${API}/api/stats-bolsa`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Erro ao buscar stats');

@@ -821,6 +821,78 @@ h1 {
   border-radius: 8px;
 }
 
+/* ── Product Selector ── */
+.product-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.product-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-card-gradient);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  font-family: inherit;
+}
+
+.product-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.product-emoji {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.product-name {
+  flex: 1;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.product-arrow {
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.product-card:hover .product-arrow {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+/* ── Botão Voltar ── */
+.btn-voltar {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: auto;
+}
+
+.btn-voltar:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
 /* ── Responsividade Mobile ── */
 @media (max-width: 480px) {
   body {

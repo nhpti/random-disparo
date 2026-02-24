@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/fgts", "destination": "/api/fgts" }
+    { "source": "/fgts", "destination": "/api/fgts" },
+    { "source": "/bolsa", "destination": "/api/bolsa" }
   ]
 }

@@ -1,0 +1,80 @@
+const { supabase } = require('../lib/supabase');
+const { verifyAuth } = require('../lib/auth');
+
+// GET /api/stats-bolsa — estatísticas Bolsa Família (autenticado)
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const user = await verifyAuth(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Não autorizado. Faça login.' });
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const hoje = new Date().toISOString().split('T')[0];
+
+    const { count: totalRedirects, error: e1 } = await supabase
+      .from('redirect_log_bolsa')
+      .select('*', { count: 'exact', head: true });
+    if (e1) throw e1;
+
+    const { count: redirectsHoje, error: e2 } = await supabase
+      .from('redirect_log_bolsa')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', `${hoje}T00:00:00`)
+      .lt('created_at', `${hoje}T23:59:59.999`);
+    if (e2) throw e2;
+
+    const { data: logsHoje, error: e3 } = await supabase
+      .from('redirect_log_bolsa')
+      .select('numero')
+      .gte('created_at', `${hoje}T00:00:00`)
+      .lt('created_at', `${hoje}T23:59:59.999`);
+    if (e3) throw e3;
+
+    const contagemHoje = {};
+    for (const log of logsHoje || []) {
+      contagemHoje[log.numero] = (contagemHoje[log.numero] || 0) + 1;
+    }
+    const porNumero = Object.entries(contagemHoje)
+      .map(([numero, total]) => ({ numero, total }))
+      .sort((a, b) => b.total - a.total);
+
+    const historico = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dia = d.toISOString().split('T')[0];
+
+      const { count, error: eH } = await supabase
+        .from('redirect_log_bolsa')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', `${dia}T00:00:00`)
+        .lt('created_at', `${dia}T23:59:59.999`);
+      if (eH) throw eH;
+
+      historico.push({
+        data: dia,
+        dia: `${dia.slice(8, 10)}/${dia.slice(5, 7)}`,
+        cliques: count || 0,
+      });
+    }
+
+    return res.status(200).json({
+      totalRedirects: totalRedirects || 0,
+      redirectsHoje: redirectsHoje || 0,
+      porNumero,
+      historico,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro ao buscar stats' });
+  }
+};
