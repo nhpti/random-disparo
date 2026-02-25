@@ -51,19 +51,28 @@ module.exports = async function handler(req, res) {
     }
 
     const contagemHoje = {};
+    const ipsPorNumero = {};
     const ipsUnicos = new Set();
     const porHora = new Array(24).fill(0);
 
     for (const log of logsHoje || []) {
       contagemHoje[log.numero] = (contagemHoje[log.numero] || 0) + 1;
-      if (log.ip) ipsUnicos.add(log.ip);
+      if (log.ip) {
+        ipsUnicos.add(log.ip);
+        if (!ipsPorNumero[log.numero]) ipsPorNumero[log.numero] = new Set();
+        ipsPorNumero[log.numero].add(log.ip);
+      }
       if (log.created_at) {
         const hora = new Date(log.created_at).getHours();
         porHora[hora]++;
       }
     }
     const porNumero = Object.entries(contagemHoje)
-      .map(([numero, total]) => ({ numero, total }))
+      .map(([numero, total]) => ({
+        numero,
+        total,
+        uniqueIps: ipsPorNumero[numero] ? ipsPorNumero[numero].size : 0,
+      }))
       .sort((a, b) => b.total - a.total);
 
     const uniqueHoje = ipsUnicos.size;

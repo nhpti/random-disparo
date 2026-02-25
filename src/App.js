@@ -311,9 +311,9 @@ function App() {
   };
 
   const getNumeroStats = (numero) => {
-    if (!stats?.porNumero) return 0;
+    if (!stats?.porNumero) return { total: 0, uniqueIps: 0 };
     const found = stats.porNumero.find(s => s.numero === numero);
-    return found ? found.total : 0;
+    return found ? { total: found.total, uniqueIps: found.uniqueIps || 0 } : { total: 0, uniqueIps: 0 };
   };
 
   const getMaxCliques = () => {
@@ -544,8 +544,8 @@ function App() {
             <div className="empty-msg">Nenhum número ativo. Adicione acima.</div>
           )}
           {numeros.map((n, idx) => {
-            const cliques = getNumeroStats(n.numero);
-            const percent = maxCliques > 0 ? (cliques / maxCliques) * 100 : 0;
+            const st = getNumeroStats(n.numero);
+            const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
             return (
               <div key={n.id} className="number-item">
                 <span className="num-index">{idx + 1}.</span>
@@ -556,7 +556,7 @@ function App() {
                       title="Copiar número">
                       {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
                     </button>
-                    <span className="num-redirects">{cliques} hoje</span>
+                    <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
                     <span className="num-status">Ativo</span>
                     <button className="btn-remove"
                       onClick={() => setConfirmDelete({ id: n.id, numero: n.numero })}
@@ -582,9 +582,11 @@ function App() {
           {/* Resumo do funil */}
           {(() => {
             const totalCliques = stats?.redirectsHoje || 0;
+            const totalUnique = stats?.uniqueHoje || 0;
             const totalMensagens = Object.values(conversoes).reduce((s, c) => s + (c.mensagens || 0), 0);
             const totalConversoes = Object.values(conversoes).reduce((s, c) => s + (c.conversoes || 0), 0);
-            const taxaAbertura = totalCliques > 0 ? ((totalMensagens / totalCliques) * 100).toFixed(1) : '0.0';
+            const taxaRepeticao = totalCliques > 0 ? (((totalCliques - totalUnique) / totalCliques) * 100).toFixed(1) : '0.0';
+            const taxaAbertura = totalUnique > 0 ? ((totalMensagens / totalUnique) * 100).toFixed(1) : '0.0';
             const taxaConversao = totalMensagens > 0 ? ((totalConversoes / totalMensagens) * 100).toFixed(1) : '0.0';
 
             return (
@@ -592,6 +594,12 @@ function App() {
                 <div className="funil-step">
                   <span className="funil-valor">{totalCliques}</span>
                   <span className="funil-label">Cliques</span>
+                  <span className="funil-taxa funil-taxa-muted">{taxaRepeticao}% repetidos</span>
+                </div>
+                <span className="funil-arrow">→</span>
+                <div className="funil-step">
+                  <span className="funil-valor">{totalUnique}</span>
+                  <span className="funil-label">Pessoas (IPs)</span>
                 </div>
                 <span className="funil-arrow">→</span>
                 <div className="funil-step">
@@ -610,18 +618,18 @@ function App() {
           })()}
 
           <p className="conv-desc">
-            Preencha manualmente quantas mensagens recebeu e quantas converteram em cada número hoje.
+            Preencha quantas mensagens recebeu e quantas converteram hoje. A taxa de abertura usa IPs únicos como base real.
           </p>
 
           <div className="conv-list">
             {numeros.map((n) => {
               const c = conversoes[n.numero] || { mensagens: 0, conversoes: 0 };
-              const cliques = getNumeroStats(n.numero);
+              const st = getNumeroStats(n.numero);
               return (
                 <div key={n.id} className="conv-item">
                   <div className="conv-numero">
                     <span className="conv-num-label">{formatarNumero(n.numero)}</span>
-                    <span className="conv-cliques">{cliques} cliques</span>
+                    <span className="conv-cliques">{st.uniqueIps} pessoas · {st.total} cliques</span>
                   </div>
                   <div className="conv-inputs">
                     <div className="conv-field">
