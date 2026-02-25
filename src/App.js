@@ -88,6 +88,7 @@ function App() {
 
   // ── Produto selecionado (null = tela de seleção) ──
   const [produto, setProduto] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState({});
 
   // ── Admin State ──
   const [numeros, setNumeros] = useState([]);
@@ -163,6 +164,31 @@ function App() {
   };
 
   const getAccessToken = () => session?.access_token || '';
+
+  // ── Fetch dashboard stats (tela de seleção de produto) ──
+  useEffect(() => {
+    if (!session || produto) return;
+    const fetchDashboard = async () => {
+      try {
+        const token = session.access_token;
+        const [fgtsStats, bolsaStats, fgtsNums, bolsaNums] = await Promise.all([
+          getStats(token),
+          getStatsBolsa(token),
+          getNumeros(token),
+          getNumerosBolsa(token),
+        ]);
+        setDashboardStats({
+          fgts: { ...fgtsStats, totalNumeros: fgtsNums.length, ativos: fgtsNums.filter(n => n.ativo !== false).length },
+          bolsa: { ...bolsaStats, totalNumeros: bolsaNums.length, ativos: bolsaNums.filter(n => n.ativo !== false).length },
+        });
+      } catch (err) {
+        console.error('Dashboard stats error:', err);
+      }
+    };
+    fetchDashboard();
+    const interval = setInterval(fetchDashboard, 60000);
+    return () => clearInterval(interval);
+  }, [session, produto]);
 
   // ── Fetch data (reage a produto e session) ──
   const fetchData = useCallback(async () => {
@@ -382,13 +408,38 @@ function App() {
         <p className="subtitle">Selecione o produto para gerenciar</p>
 
         <div className="product-selector">
-          {Object.entries(PRODUTOS).map(([key, p]) => (
-            <button key={key} className="product-card" onClick={() => handleSelectProduto(key)}>
-              <span className="product-emoji">{p.emoji}</span>
-              <span className="product-name">{p.nome}</span>
-              <span className="product-arrow">→</span>
-            </button>
-          ))}
+          {Object.entries(PRODUTOS).map(([key, p]) => {
+            const ds = dashboardStats[key];
+            return (
+              <button key={key} className="product-card" onClick={() => handleSelectProduto(key)}>
+                <span className="product-emoji">{p.emoji}</span>
+                <div className="product-info">
+                  <span className="product-name">{p.nome}</span>
+                  {ds ? (
+                    <div className="product-stats">
+                      <span className="product-stat">
+                        <span className="product-stat-value">{ds.redirectsHoje ?? 0}</span>
+                        <span className="product-stat-label">cliques hoje</span>
+                      </span>
+                      <span className="product-stat-divider">·</span>
+                      <span className="product-stat">
+                        <span className="product-stat-value">{ds.uniqueHoje ?? 0}</span>
+                        <span className="product-stat-label">IPs únicos</span>
+                      </span>
+                      <span className="product-stat-divider">·</span>
+                      <span className="product-stat">
+                        <span className="product-stat-value">{ds.ativos}/{ds.totalNumeros}</span>
+                        <span className="product-stat-label">números</span>
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="product-stat-loading">Carregando...</span>
+                  )}
+                </div>
+                <span className="product-arrow">→</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     );

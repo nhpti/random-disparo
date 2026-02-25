@@ -1284,11 +1284,55 @@ h1 {
   flex-shrink: 0;
 }
 
-.product-name {
+.product-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.product-name {
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.product-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.product-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.product-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.product-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.product-stat-divider {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  opacity: 0.5;
+}
+
+.product-stat-loading {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .product-arrow {
