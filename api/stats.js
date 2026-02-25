@@ -37,11 +37,13 @@ module.exports = async function handler(req, res) {
     if (e2) throw e2;
 
     // Cliques de HOJE por número + IPs únicos + distribuição por hora
+    // IMPORTANTE: Supabase limita a 1000 linhas por padrão, precisamos aumentar
     const { data: logsHoje, error: e3 } = await supabase
       .from('redirect_log')
       .select('numero, ip, created_at')
       .gte('created_at', `${hoje}T00:00:00`)
-      .lt('created_at', `${hoje}T23:59:59.999`);
+      .lt('created_at', `${hoje}T23:59:59.999`)
+      .limit(50000);
     if (e3) throw e3;
 
     const contagemHoje = {};
