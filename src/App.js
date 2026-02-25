@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  getNumeros, addNumero, deleteNumero, getStats,
+  getNumeros, addNumero, deleteNumero, toggleNumero, getStats,
   getConversoes, saveConversao,
-  getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, getStatsBolsa,
+  getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
   getConversoesBolsa, saveConversaoBolsa,
 } from './api';
 import { supabase } from './supabaseClient';
@@ -18,6 +18,7 @@ const PRODUTOS = {
     apiGet: getNumeros,
     apiAdd: addNumero,
     apiDel: deleteNumero,
+    apiToggle: toggleNumero,
     apiStats: getStats,
     apiGetConv: getConversoes,
     apiSaveConv: saveConversao,
@@ -32,6 +33,7 @@ const PRODUTOS = {
     apiGet: getNumerosBolsa,
     apiAdd: addNumeroBolsa,
     apiDel: deleteNumeroBolsa,
+    apiToggle: toggleNumeroBolsa,
     apiStats: getStatsBolsa,
     apiGetConv: getConversoesBolsa,
     apiSaveConv: saveConversaoBolsa,
@@ -232,6 +234,24 @@ function App() {
       fetchData();
     } catch (err) {
       showToast('Erro ao remover número.', 'error');
+      console.error(err);
+    }
+  };
+
+  const handleToggle = async (id, numero, ativoAtual) => {
+    if (!config) return;
+    try {
+      const novoStatus = !ativoAtual;
+      await config.apiToggle(id, novoStatus, getAccessToken());
+      showToast(
+        novoStatus
+          ? `Número ${formatarNumero(numero)} ativado!`
+          : `Número ${formatarNumero(numero)} pausado.`,
+        novoStatus ? 'success' : 'error'
+      );
+      fetchData();
+    } catch (err) {
+      showToast('Erro ao alterar status.', 'error');
       console.error(err);
     }
   };
@@ -487,8 +507,8 @@ function App() {
       {/* Números Ativos */}
       <div className="numbers-card">
         <div className="card-header">
-          <h2>Números Ativos</h2>
-          <span className="counter">{numeros.length}</span>
+          <h2>Números</h2>
+          <span className="counter">{numeros.filter(n => n.ativo !== false).length} / {numeros.length}</span>
         </div>
 
         <div className="input-area">
@@ -499,13 +519,14 @@ function App() {
 
         <div className="numbers-list">
           {numeros.length === 0 && (
-            <div className="empty-msg">Nenhum número ativo. Adicione acima.</div>
+            <div className="empty-msg">Nenhum número cadastrado. Adicione acima.</div>
           )}
           {numeros.map((n, idx) => {
             const st = getNumeroStats(n.numero);
             const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
+            const isAtivo = n.ativo !== false;
             return (
-              <div key={n.id} className="number-item">
+              <div key={n.id} className={`number-item ${!isAtivo ? 'number-item-paused' : ''}`}>
                 <span className="num-index">{idx + 1}.</span>
                 <div className="num-info">
                   <div className="num-top-row">
@@ -515,7 +536,12 @@ function App() {
                       {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
                     </button>
                     <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
-                    <span className="num-status">Ativo</span>
+                    <button
+                      className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'}`}
+                      onClick={() => handleToggle(n.id, n.numero, isAtivo)}
+                      title={isAtivo ? 'Pausar número' : 'Ativar número'}>
+                      {isAtivo ? 'Ativo' : 'Pausado'}
+                    </button>
                     <button className="btn-remove"
                       onClick={() => setConfirmDelete({ id: n.id, numero: n.numero })}
                       title="Remover número">&times;</button>

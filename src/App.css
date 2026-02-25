@@ -911,6 +911,51 @@ h1 {
   flex-shrink: 0;
 }
 
+/* ── Toggle Ativo/Pausado ── */
+.btn-toggle {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-toggle-on {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.btn-toggle-on:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.btn-toggle-off {
+  color: var(--text-muted);
+  background: var(--bg-input);
+  border: 1px dashed var(--border);
+}
+
+.btn-toggle-off:hover {
+  background: var(--success-bg);
+  color: var(--success);
+  border-style: solid;
+}
+
+/* ── Número pausado ── */
+.number-item-paused {
+  opacity: 0.5;
+}
+
+.number-item-paused .num-bar-fill {
+  background: var(--border) !important;
+}
+
 .btn-remove {
   background: none;
   border: none;

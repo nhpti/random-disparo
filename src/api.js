@@ -32,6 +32,19 @@ export async function deleteNumero(id, token) {
   return res.json();
 }
 
+export async function toggleNumero(id, ativo, token) {
+  const res = await fetch(`${API}/api/numeros/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ativo }),
+  });
+  if (!res.ok) throw new Error('Erro ao alterar status');
+  return res.json();
+}
+
 export async function getStats(token) {
   const res = await fetch(`${API}/api/stats`, {
     headers: { 'Authorization': `Bearer ${token}` },
@@ -90,6 +103,19 @@ export async function deleteNumeroBolsa(id, token) {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Erro ao remover');
+  return res.json();
+}
+
+export async function toggleNumeroBolsa(id, ativo, token) {
+  const res = await fetch(`${API}/api/numeros-bolsa/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ativo }),
+  });
+  if (!res.ok) throw new Error('Erro ao alterar status');
   return res.json();
 }
 

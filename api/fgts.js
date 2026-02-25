@@ -23,7 +23,8 @@ module.exports = async function handler(req, res) {
     // Buscar todos os números ativos
     const { data: numeros, error } = await supabase
       .from('numeros')
-      .select('numero');
+      .select('numero')
+      .neq('ativo', false);
 
     if (error) throw error;
 

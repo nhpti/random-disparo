@@ -19,7 +19,8 @@ module.exports = async function handler(req, res) {
   try {
     const { data: numeros, error } = await supabase
       .from('numeros_bolsa')
-      .select('numero');
+      .select('numero')
+      .neq('ativo', false);
 
     if (error) throw error;
 
