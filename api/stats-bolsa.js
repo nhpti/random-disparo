@@ -79,23 +79,47 @@ module.exports = async function handler(req, res) {
 
     const uniqueHoje = ipsUnicos.size;
 
+    // Histórico dos últimos 7 dias (com IPs únicos)
+    const d7 = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    d7.setDate(d7.getDate() - 6);
+    const dia7 = d7.toISOString().split('T')[0];
+
+    let logs7d = [];
+    let from7 = 0;
+    while (true) {
+      const { data: page, error: e7 } = await supabase
+        .from('redirect_log_bolsa')
+        .select('ip, created_at')
+        .gte('created_at', `${dia7}T00:00:00`)
+        .range(from7, from7 + PAGE - 1)
+        .order('created_at', { ascending: true });
+      if (e7) throw e7;
+      logs7d = logs7d.concat(page || []);
+      if (!page || page.length < PAGE) break;
+      from7 += PAGE;
+    }
+
+    // Agrupar por dia
+    const porDia = {};
+    for (const log of logs7d) {
+      const brt = new Date(new Date(log.created_at).getTime() - 3 * 60 * 60 * 1000);
+      const diaKey = brt.toISOString().split('T')[0];
+      if (!porDia[diaKey]) porDia[diaKey] = { cliques: 0, ips: new Set() };
+      porDia[diaKey].cliques++;
+      if (log.ip) porDia[diaKey].ips.add(log.ip);
+    }
+
     const historico = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(Date.now() - 3 * 60 * 60 * 1000); // BRT
-      d.setDate(d.getDate() - i);
-      const dia = d.toISOString().split('T')[0];
-
-      const { count, error: eH } = await supabase
-        .from('redirect_log_bolsa')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', `${dia}T00:00:00`)
-        .lt('created_at', `${dia}T23:59:59.999`);
-      if (eH) throw eH;
-
+      const dd = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      dd.setDate(dd.getDate() - i);
+      const diaStr = dd.toISOString().split('T')[0];
+      const info = porDia[diaStr] || { cliques: 0, ips: new Set() };
       historico.push({
-        data: dia,
-        dia: `${dia.slice(8, 10)}/${dia.slice(5, 7)}`,
-        cliques: count || 0,
+        data: diaStr,
+        dia: `${diaStr.slice(8, 10)}/${diaStr.slice(5, 7)}`,
+        cliques: info.cliques,
+        uniqueIps: info.ips.size,
       });
     }
 

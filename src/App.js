@@ -556,16 +556,29 @@ function App() {
         {stats?.historico && stats.historico.length > 0 && (
           <div className="historico-section">
             <h3 className="historico-title">📊 Últimos 7 dias</h3>
+            <div className="historico-legenda">
+              <span className="legenda-item"><span className="legenda-cor legenda-cliques"></span>Cliques</span>
+              <span className="legenda-item"><span className="legenda-cor legenda-ips"></span>IPs únicos</span>
+            </div>
             <div className="historico-chart">
               {stats.historico.map((h, i) => {
                 const maxHist = Math.max(...stats.historico.map(x => x.cliques), 1);
-                const barHeight = (h.cliques / maxHist) * 100;
+                const barCliques = (h.cliques / maxHist) * 100;
+                const barIps = (h.uniqueIps / maxHist) * 100;
                 const isHoje = i === stats.historico.length - 1;
                 return (
                   <div key={h.data} className={`historico-bar-col ${isHoje ? 'historico-hoje' : ''}`}>
-                    <span className="historico-valor">{h.cliques}</span>
-                    <div className="historico-bar-bg">
-                      <div className="historico-bar-fill" style={{ height: `${barHeight}%` }}></div>
+                    <div className="historico-valores">
+                      <span className="historico-valor">{h.cliques}</span>
+                      <span className="historico-valor historico-valor-ip">{h.uniqueIps}</span>
+                    </div>
+                    <div className="historico-bars-duo">
+                      <div className="historico-bar-bg">
+                        <div className="historico-bar-fill" style={{ height: `${barCliques}%` }}></div>
+                      </div>
+                      <div className="historico-bar-bg historico-bar-bg-ip">
+                        <div className="historico-bar-fill-ip" style={{ height: `${barIps}%` }}></div>
+                      </div>
                     </div>
                     <span className="historico-dia">{isHoje ? 'Hoje' : h.dia}</span>
                   </div>
