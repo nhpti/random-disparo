@@ -605,28 +605,6 @@ function App() {
             </div>
           </div>
         )}
-
-        {/* Distribuição por Hora (período) */}
-        {stats?.porHora && stats.porHora.some(v => v > 0) && (
-          <div className="historico-section">
-            <h3 className="historico-title">🕐 Distribuição por Hora</h3>
-            <div className="hora-chart">
-              {stats.porHora.map((count, hora) => {
-                const maxHora = Math.max(...stats.porHora, 1);
-                const barHeight = (count / maxHora) * 100;
-                return (
-                  <div key={hora} className={`hora-bar-col ${count > 0 ? 'hora-active' : ''}`}>
-                    <span className="hora-valor">{count > 0 ? count : ''}</span>
-                    <div className="hora-bar-bg">
-                      <div className="hora-bar-fill" style={{ height: `${barHeight}%` }}></div>
-                    </div>
-                    <span className="hora-label">{String(hora).padStart(2, '0')}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Números Ativos */}
