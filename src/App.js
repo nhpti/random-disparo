@@ -650,6 +650,22 @@ function App() {
           <span className="counter">{numeros.filter(n => n.ativo !== false).length} / {numeros.length}</span>
         </div>
 
+        {/* Alerta: números sem cliques */}
+        {(() => {
+          const semCliques = numeros.filter(n => {
+            if (n.ativo === false) return false;
+            const st = getNumeroStats(n.numero);
+            return st.total === 0;
+          });
+          if (semCliques.length === 0) return null;
+          return (
+            <div className="alerta-sem-cliques">
+              <span className="alerta-icon">⚠️</span>
+              <span>{semCliques.length} número{semCliques.length > 1 ? 's' : ''} ativo{semCliques.length > 1 ? 's' : ''} sem cliques no período</span>
+            </div>
+          );
+        })()}
+
         <div className="input-area">
           <input ref={inputRef} type="text" placeholder="Ex: 48999998888"
             value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} />
@@ -664,8 +680,9 @@ function App() {
             const st = getNumeroStats(n.numero);
             const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
             const isAtivo = n.ativo !== false;
+            const semClique = isAtivo && st.total === 0;
             return (
-              <div key={n.id} className={`number-item ${!isAtivo ? 'number-item-paused' : ''}`}>
+              <div key={n.id} className={`number-item ${!isAtivo ? 'number-item-paused' : ''} ${semClique ? 'number-item-warn' : ''}`}>
                 <span className="num-index">{idx + 1}.</span>
                 <div className="num-info">
                   <div className="num-top-row">
@@ -675,6 +692,7 @@ function App() {
                       {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
                     </button>
                     <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
+                    {semClique && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
                     <button
                       className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'}`}
                       onClick={() => handleToggle(n.id, n.numero, isAtivo)}

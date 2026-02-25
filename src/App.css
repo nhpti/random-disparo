@@ -1196,6 +1196,47 @@ body.dark .historico-bar-fill-ip {
   background: var(--border) !important;
 }
 
+/* ── Alerta sem cliques ── */
+.alerta-sem-cliques {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8d6e00;
+}
+body.dark .alerta-sem-cliques {
+  background: rgba(255, 224, 130, 0.1);
+  border-color: rgba(255, 224, 130, 0.25);
+  color: #ffe082;
+}
+.alerta-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.number-item-warn {
+  border-color: #ffe082 !important;
+  background: #fffdf5 !important;
+}
+body.dark .number-item-warn {
+  border-color: rgba(255, 224, 130, 0.25) !important;
+  background: rgba(255, 224, 130, 0.05) !important;
+}
+.num-warn-badge {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  animation: pulse-warn 2s ease-in-out infinite;
+}
+@keyframes pulse-warn {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .btn-remove {
   background: none;
   border: none;
