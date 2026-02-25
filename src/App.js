@@ -91,8 +91,6 @@ function App() {
   const [input, setInput] = useState('');
   const [stats, setStats] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [testResult, setTestResult] = useState('');
-  const [testing, setTesting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState(null);
   const [darkMode, setDarkMode] = useState(() => {
@@ -198,7 +196,6 @@ function App() {
     setStats(null);
     setConversoes({});
     setInput('');
-    setTestResult('');
     setCopied(false);
     setConfirmDelete(null);
     setProduto(key);
@@ -209,7 +206,6 @@ function App() {
     setNumeros([]);
     setStats(null);
     setConversoes({});
-    setTestResult('');
   };
 
   const handleAdd = async () => {
@@ -246,34 +242,6 @@ function App() {
       showToast('Link copiado!');
       setTimeout(() => setCopied(false), 2000);
     });
-  };
-
-  const handleTest = async () => {
-    if (numeros.length === 0 || testing || !config) return;
-    setTesting(true);
-    setTestResult('');
-    const results = [];
-    for (let i = 0; i < 3; i++) {
-      try {
-        const res = await fetch(`${config.testPath}?test=1`, { redirect: 'manual' });
-        const location = res.headers.get('location') || '';
-        if (location) {
-          results.push(location);
-        } else {
-          const apiRes = await fetch(config.numerosPath);
-          const data = await apiRes.json();
-          if (data.length > 0) {
-            const rand = data[Math.floor(Math.random() * data.length)];
-            results.push(`wa.me/55${rand.numero.replace(/\D/g, '')}`);
-          }
-        }
-      } catch {
-        results.push('(erro)');
-      }
-    }
-    setTestResult(results.join('  →  '));
-    setTesting(false);
-    fetchData();
   };
 
   const handleKeyDown = (e) => {
@@ -512,16 +480,6 @@ function App() {
                 );
               })}
             </div>
-          </div>
-        )}
-
-        <button className="btn-test" onClick={handleTest}
-          disabled={testing || numeros.length === 0}>
-          {testing ? '⏳ Testando...' : '🔀 Testar Randomização'}
-        </button>
-        {testResult && (
-          <div className="test-result">
-            <span className="test-label">Resultado:</span> {testResult}
           </div>
         )}
       </div>
