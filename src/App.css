@@ -568,23 +568,110 @@ h1 {
   font-family: 'Consolas', monospace;
 }
 
-/* ── Activity Log Card ── */
-.activity-card {
+/* ── Page Wrapper (layout com sidebar) ── */
+.page-wrapper {
+  width: 100%;
+  max-width: 620px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Log Sidebar ── */
+.log-sidebar {
+  position: fixed;
+  top: 0;
+  right: -360px;
+  width: 340px;
+  height: 100vh;
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: var(--shadow-md);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s ease;
+}
+.log-sidebar.open {
+  right: 0;
+}
+
+.log-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.log-sidebar-header h3 {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+.log-sidebar-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.log-sidebar-close:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.log-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ── Log toggle button ── */
+.btn-log-toggle {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  margin-top: 20px;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: all 0.2s;
+}
+.btn-log-toggle:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
+}
+.log-open .btn-log-toggle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Log sidebar overlay (mobile) ── */
+.log-sidebar::before {
+  content: '';
+  display: none;
 }
 
 .activity-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 320px;
   overflow-y: auto;
-  margin-top: 16px;
+  padding: 16px 20px;
+  flex: 1;
 }
 
 .activity-item {
@@ -598,7 +685,7 @@ h1 {
   transition: background 0.15s;
 }
 .activity-item:hover {
-  background: var(--bg-hover);
+  background: var(--bg-item-hover);
 }
 .activity-item.acao-add { border-left-color: #22c55e; }
 .activity-item.acao-remove { border-left-color: #ef4444; }
@@ -621,8 +708,8 @@ h1 {
 }
 
 .activity-text {
-  font-size: 0.85rem;
-  color: var(--text);
+  font-size: 0.82rem;
+  color: var(--text-primary);
   line-height: 1.3;
 }
 .activity-text strong {
@@ -1392,10 +1479,19 @@ h1 {
     padding: 20px 16px;
   }
 
-  .activity-card {
-    padding: 20px 16px;
+  .log-sidebar {
+    width: 100%;
+    right: -100%;
   }
-  .activity-list {
-    max-height: 260px;
+
+  .btn-log-toggle {
+    right: 12px;
+    top: auto;
+    bottom: 20px;
+    transform: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    box-shadow: var(--shadow-lg);
   }
 }

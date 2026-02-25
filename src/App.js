@@ -104,6 +104,7 @@ function App() {
   const [conversoes, setConversoes] = useState({});
   const [savingConv, setSavingConv] = useState(null);
   const [activityLog, setActivityLog] = useState([]);
+  const [logOpen, setLogOpen] = useState(false);
   const inputRef = useRef(null);
   const toastTimeout = useRef(null);
 
@@ -397,7 +398,43 @@ function App() {
   const maxCliques = getMaxCliques();
 
   return (
+    <div className={`page-wrapper ${logOpen ? 'log-open' : ''}`}>
+    {/* Side Panel - Log de Atividades */}
+    <div className={`log-sidebar ${logOpen ? 'open' : ''}`}>
+      <div className="log-sidebar-header">
+        <h3>📋 Log de Atividades</h3>
+        <button className="log-sidebar-close" onClick={() => setLogOpen(false)}>✕</button>
+      </div>
+      {activityLog.length === 0 ? (
+        <p className="log-empty">Nenhuma atividade registrada.</p>
+      ) : (
+        <div className="activity-list">
+          {activityLog.map((log) => {
+            const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
+            const acaoClass = { adicionou: 'acao-add', removeu: 'acao-remove', pausou: 'acao-pause', ativou: 'acao-activate' };
+            const dt = new Date(log.created_at);
+            const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            return (
+              <div key={log.id} className={`activity-item ${acaoClass[log.acao] || ''}`}>
+                <span className="activity-emoji">{acaoEmoji[log.acao] || '•'}</span>
+                <div className="activity-info">
+                  <span className="activity-text">
+                    <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
+                  </span>
+                  <span className="activity-time">{timeStr}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
     <div className="page">
+      {/* Botão toggle log */}
+      <button className="btn-log-toggle" onClick={() => setLogOpen(!logOpen)} title="Log de Atividades">
+        📋
+      </button>
       {/* Toast */}
       {toast && (
         <div className={`toast toast-${toast.type}`}>
@@ -562,34 +599,6 @@ function App() {
         </div>
       </div>
 
-      {/* Log de Atividades */}
-      {activityLog.length > 0 && (
-        <div className="activity-card">
-          <div className="card-header">
-            <h2>📋 Log de Atividades</h2>
-          </div>
-          <div className="activity-list">
-            {activityLog.map((log) => {
-              const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
-              const acaoClass = { adicionou: 'acao-add', removeu: 'acao-remove', pausou: 'acao-pause', ativou: 'acao-activate' };
-              const dt = new Date(log.created_at);
-              const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-              return (
-                <div key={log.id} className={`activity-item ${acaoClass[log.acao] || ''}`}>
-                  <span className="activity-emoji">{acaoEmoji[log.acao] || '•'}</span>
-                  <div className="activity-info">
-                    <span className="activity-text">
-                      <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
-                    </span>
-                    <span className="activity-time">{timeStr}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Painel de Conversões */}
       {numeros.length > 0 && (
         <div className="conversoes-card">
@@ -673,6 +682,7 @@ function App() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
