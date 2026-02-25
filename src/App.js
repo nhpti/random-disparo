@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getNumeros, addNumero, deleteNumero, getStats,
+  getConversoes, saveConversao,
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, getStatsBolsa,
+  getConversoesBolsa, saveConversaoBolsa,
 } from './api';
 import { supabase } from './supabaseClient';
 import './App.css';
@@ -17,6 +19,8 @@ const PRODUTOS = {
     apiAdd: addNumero,
     apiDel: deleteNumero,
     apiStats: getStats,
+    apiGetConv: getConversoes,
+    apiSaveConv: saveConversao,
     testPath: '/api/fgts',
     numerosPath: '/api/numeros',
   },
@@ -29,6 +33,8 @@ const PRODUTOS = {
     apiAdd: addNumeroBolsa,
     apiDel: deleteNumeroBolsa,
     apiStats: getStatsBolsa,
+    apiGetConv: getConversoesBolsa,
+    apiSaveConv: saveConversaoBolsa,
     testPath: '/api/bolsa',
     numerosPath: '/api/numeros-bolsa',
   },
@@ -94,6 +100,8 @@ function App() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [copiedNumero, setCopiedNumero] = useState(null);
+  const [conversoes, setConversoes] = useState({});
+  const [savingConv, setSavingConv] = useState(null);
   const inputRef = useRef(null);
   const toastTimeout = useRef(null);
 
@@ -158,9 +166,20 @@ function App() {
     if (!session || !config) return;
     try {
       const token = session.access_token;
-      const [nums, st] = await Promise.all([config.apiGet(token), config.apiStats(token)]);
+      const hoje = new Date().toISOString().split('T')[0];
+      const [nums, st, conv] = await Promise.all([
+        config.apiGet(token),
+        config.apiStats(token),
+        config.apiGetConv(token, hoje),
+      ]);
       setNumeros(nums);
       setStats(st);
+      // Indexar conversões por número
+      const convMap = {};
+      for (const c of conv || []) {
+        convMap[c.numero] = { mensagens: c.mensagens || 0, conversoes: c.conversoes || 0 };
+      }
+      setConversoes(convMap);
     } catch (err) {
       console.error(err);
     }
@@ -177,6 +196,7 @@ function App() {
   const handleSelectProduto = (key) => {
     setNumeros([]);
     setStats(null);
+    setConversoes({});
     setInput('');
     setTestResult('');
     setCopied(false);
@@ -188,6 +208,7 @@ function App() {
     setProduto(null);
     setNumeros([]);
     setStats(null);
+    setConversoes({});
     setTestResult('');
   };
 
@@ -257,6 +278,36 @@ function App() {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleAdd();
+  };
+
+  // ── Conversões: atualizar campo local ──
+  const handleConvChange = (numero, field, value) => {
+    const val = parseInt(value, 10) || 0;
+    setConversoes(prev => ({
+      ...prev,
+      [numero]: { ...prev[numero], [field]: val },
+    }));
+  };
+
+  // ── Conversões: salvar no servidor ──
+  const handleSaveConv = async (numero) => {
+    if (!config) return;
+    setSavingConv(numero);
+    try {
+      const hoje = new Date().toISOString().split('T')[0];
+      const c = conversoes[numero] || { mensagens: 0, conversoes: 0 };
+      await config.apiSaveConv({
+        numero,
+        data: hoje,
+        mensagens: c.mensagens,
+        conversoes: c.conversoes,
+      }, getAccessToken());
+      showToast(`Conversões de ${formatarNumero(numero)} salvas!`);
+    } catch (err) {
+      showToast('Erro ao salvar conversões.', 'error');
+      console.error(err);
+    }
+    setSavingConv(null);
   };
 
   const getNumeroStats = (numero) => {
@@ -407,7 +458,11 @@ function App() {
           </div>
           <div className="stat-card stat-card-highlight">
             <span className="stat-value">{stats?.redirectsHoje ?? '—'}</span>
-            <span className="stat-label">Hoje</span>
+            <span className="stat-label">Cliques hoje</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-value">{stats?.uniqueHoje ?? '—'}</span>
+            <span className="stat-label">IPs únicos hoje</span>
           </div>
           <div className="stat-card">
             <span className="stat-value">{numeros.length}</span>
@@ -431,6 +486,28 @@ function App() {
                       <div className="historico-bar-fill" style={{ height: `${barHeight}%` }}></div>
                     </div>
                     <span className="historico-dia">{isHoje ? 'Hoje' : h.dia}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Distribuição por Hora (hoje) */}
+        {stats?.porHora && stats.porHora.some(v => v > 0) && (
+          <div className="historico-section">
+            <h3 className="historico-title">🕐 Distribuição por Hora (Hoje)</h3>
+            <div className="hora-chart">
+              {stats.porHora.map((count, hora) => {
+                const maxHora = Math.max(...stats.porHora, 1);
+                const barHeight = (count / maxHora) * 100;
+                return (
+                  <div key={hora} className={`hora-bar-col ${count > 0 ? 'hora-active' : ''}`}>
+                    <span className="hora-valor">{count > 0 ? count : ''}</span>
+                    <div className="hora-bar-bg">
+                      <div className="hora-bar-fill" style={{ height: `${barHeight}%` }}></div>
+                    </div>
+                    <span className="hora-label">{String(hora).padStart(2, '0')}</span>
                   </div>
                 );
               })}
@@ -494,6 +571,82 @@ function App() {
           })}
         </div>
       </div>
+
+      {/* Painel de Conversões */}
+      {numeros.length > 0 && (
+        <div className="conversoes-card">
+          <div className="card-header">
+            <h2>📈 Funil de Conversão (Hoje)</h2>
+          </div>
+
+          {/* Resumo do funil */}
+          {(() => {
+            const totalCliques = stats?.redirectsHoje || 0;
+            const totalMensagens = Object.values(conversoes).reduce((s, c) => s + (c.mensagens || 0), 0);
+            const totalConversoes = Object.values(conversoes).reduce((s, c) => s + (c.conversoes || 0), 0);
+            const taxaAbertura = totalCliques > 0 ? ((totalMensagens / totalCliques) * 100).toFixed(1) : '0.0';
+            const taxaConversao = totalMensagens > 0 ? ((totalConversoes / totalMensagens) * 100).toFixed(1) : '0.0';
+
+            return (
+              <div className="funil-resumo">
+                <div className="funil-step">
+                  <span className="funil-valor">{totalCliques}</span>
+                  <span className="funil-label">Cliques</span>
+                </div>
+                <span className="funil-arrow">→</span>
+                <div className="funil-step">
+                  <span className="funil-valor">{totalMensagens}</span>
+                  <span className="funil-label">Mensagens</span>
+                  <span className="funil-taxa">{taxaAbertura}%</span>
+                </div>
+                <span className="funil-arrow">→</span>
+                <div className="funil-step">
+                  <span className="funil-valor">{totalConversoes}</span>
+                  <span className="funil-label">Conversões</span>
+                  <span className="funil-taxa">{taxaConversao}%</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          <p className="conv-desc">
+            Preencha manualmente quantas mensagens recebeu e quantas converteram em cada número hoje.
+          </p>
+
+          <div className="conv-list">
+            {numeros.map((n) => {
+              const c = conversoes[n.numero] || { mensagens: 0, conversoes: 0 };
+              const cliques = getNumeroStats(n.numero);
+              return (
+                <div key={n.id} className="conv-item">
+                  <div className="conv-numero">
+                    <span className="conv-num-label">{formatarNumero(n.numero)}</span>
+                    <span className="conv-cliques">{cliques} cliques</span>
+                  </div>
+                  <div className="conv-inputs">
+                    <div className="conv-field">
+                      <label>Msgs</label>
+                      <input type="number" min="0" value={c.mensagens || ''}
+                        placeholder="0"
+                        onChange={(e) => handleConvChange(n.numero, 'mensagens', e.target.value)} />
+                    </div>
+                    <div className="conv-field">
+                      <label>Conv</label>
+                      <input type="number" min="0" value={c.conversoes || ''}
+                        placeholder="0"
+                        onChange={(e) => handleConvChange(n.numero, 'conversoes', e.target.value)} />
+                    </div>
+                    <button className="btn-save-conv" onClick={() => handleSaveConv(n.numero)}
+                      disabled={savingConv === n.numero}>
+                      {savingConv === n.numero ? '...' : '💾'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

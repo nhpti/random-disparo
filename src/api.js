@@ -40,6 +40,28 @@ export async function getStats(token) {
   return res.json();
 }
 
+export async function getConversoes(token, data) {
+  const query = data ? `?data=${data}` : '';
+  const res = await fetch(`${API}/api/conversoes${query}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar conversões');
+  return res.json();
+}
+
+export async function saveConversao(payload, token) {
+  const res = await fetch(`${API}/api/conversoes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Erro ao salvar conversão');
+  return res.json();
+}
+
 // ── BOLSA FAMÍLIA ──
 export async function getNumerosBolsa(token) {
   const res = await fetch(`${API}/api/numeros-bolsa`, {
@@ -76,5 +98,27 @@ export async function getStatsBolsa(token) {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Erro ao buscar stats');
+  return res.json();
+}
+
+export async function getConversoesBolsa(token, data) {
+  const query = data ? `?data=${data}` : '';
+  const res = await fetch(`${API}/api/conversoes-bolsa${query}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar conversões');
+  return res.json();
+}
+
+export async function saveConversaoBolsa(payload, token) {
+  const res = await fetch(`${API}/api/conversoes-bolsa`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Erro ao salvar conversão');
   return res.json();
 }

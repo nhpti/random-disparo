@@ -34,18 +34,28 @@ module.exports = async function handler(req, res) {
 
     const { data: logsHoje, error: e3 } = await supabase
       .from('redirect_log_bolsa')
-      .select('numero')
+      .select('numero, ip, created_at')
       .gte('created_at', `${hoje}T00:00:00`)
       .lt('created_at', `${hoje}T23:59:59.999`);
     if (e3) throw e3;
 
     const contagemHoje = {};
+    const ipsUnicos = new Set();
+    const porHora = new Array(24).fill(0);
+
     for (const log of logsHoje || []) {
       contagemHoje[log.numero] = (contagemHoje[log.numero] || 0) + 1;
+      if (log.ip) ipsUnicos.add(log.ip);
+      if (log.created_at) {
+        const hora = new Date(log.created_at).getHours();
+        porHora[hora]++;
+      }
     }
     const porNumero = Object.entries(contagemHoje)
       .map(([numero, total]) => ({ numero, total }))
       .sort((a, b) => b.total - a.total);
+
+    const uniqueHoje = ipsUnicos.size;
 
     const historico = [];
     for (let i = 6; i >= 0; i--) {
@@ -70,7 +80,9 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       totalRedirects: totalRedirects || 0,
       redirectsHoje: redirectsHoje || 0,
+      uniqueHoje,
       porNumero,
+      porHora,
       historico,
     });
   } catch (err) {
