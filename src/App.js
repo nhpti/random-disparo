@@ -255,7 +255,7 @@ function App() {
     const results = [];
     for (let i = 0; i < 3; i++) {
       try {
-        const res = await fetch(config.testPath, { redirect: 'manual' });
+        const res = await fetch(`${config.testPath}?test=1`, { redirect: 'manual' });
         const location = res.headers.get('location') || '';
         if (location) {
           results.push(location);

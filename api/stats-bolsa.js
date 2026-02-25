@@ -18,7 +18,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const hoje = new Date().toISOString().split('T')[0];
+    // Usar horário de Brasília (UTC-3)
+    const agora = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    const hoje = agora.toISOString().split('T')[0];
 
     const { count: totalRedirects, error: e1 } = await supabase
       .from('redirect_log_bolsa')
@@ -63,8 +65,8 @@ module.exports = async function handler(req, res) {
         ipsPorNumero[log.numero].add(log.ip);
       }
       if (log.created_at) {
-        const hora = new Date(log.created_at).getHours();
-        porHora[hora]++;
+        const horaBrt = new Date(new Date(log.created_at).getTime() - 3 * 60 * 60 * 1000);
+        porHora[horaBrt.getUTCHours()]++;
       }
     }
     const porNumero = Object.entries(contagemHoje)
@@ -79,7 +81,7 @@ module.exports = async function handler(req, res) {
 
     const historico = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
+      const d = new Date(Date.now() - 3 * 60 * 60 * 1000); // BRT
       d.setDate(d.getDate() - i);
       const dia = d.toISOString().split('T')[0];
 

@@ -34,14 +34,17 @@ module.exports = async function handler(req, res) {
 
     console.log(`[BOLSA REDIRECT] ${new Date().toISOString()} → ${sorteado.numero} → ${whatsappUrl}`);
 
-    supabase
-      .from('redirect_log_bolsa')
-      .insert({
-        numero: sorteado.numero,
-        ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown',
-      })
-      .then(() => {})
-      .catch(() => {});
+    // Pular log se for teste (?test=1)
+    if (!req.query.test) {
+      supabase
+        .from('redirect_log_bolsa')
+        .insert({
+          numero: sorteado.numero,
+          ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown',
+        })
+        .then(() => {})
+        .catch(() => {});
+    }
 
     return res.redirect(302, whatsappUrl);
   } catch (err) {
