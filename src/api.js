@@ -45,8 +45,12 @@ export async function toggleNumero(id, ativo, token) {
   return res.json();
 }
 
-export async function getStats(token) {
-  const res = await fetch(`${API}/api/stats`, {
+export async function getStats(token, de, ate) {
+  const params = [];
+  if (de) params.push(`de=${de}`);
+  if (ate) params.push(`ate=${ate}`);
+  const query = params.length ? `?${params.join('&')}` : '';
+  const res = await fetch(`${API}/api/stats${query}`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Erro ao buscar stats');
@@ -119,8 +123,12 @@ export async function toggleNumeroBolsa(id, ativo, token) {
   return res.json();
 }
 
-export async function getStatsBolsa(token) {
-  const res = await fetch(`${API}/api/stats-bolsa`, {
+export async function getStatsBolsa(token, de, ate) {
+  const params = [];
+  if (de) params.push(`de=${de}`);
+  if (ate) params.push(`ate=${ate}`);
+  const query = params.length ? `?${params.join('&')}` : '';
+  const res = await fetch(`${API}/api/stats-bolsa${query}`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Erro ao buscar stats');

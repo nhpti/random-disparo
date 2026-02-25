@@ -397,6 +397,70 @@ h1 {
   background: var(--success-bg);
 }
 
+/* ── Filtro por Período ── */
+.filtro-periodo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 8px;
+  padding: 14px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.filtro-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.filtro-periodo input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.filtro-periodo input[type="date"]:focus {
+  border-color: var(--accent);
+}
+
+.filtro-sep {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-filtro-hoje,
+.btn-filtro-7d,
+.btn-filtro-30d {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn-filtro-hoje:hover,
+.btn-filtro-7d:hover,
+.btn-filtro-30d:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
 /* ── Test ── */
 .btn-test {
   padding: 10px 24px;
@@ -474,11 +538,14 @@ body.dark .legenda-ips { background: linear-gradient(180deg, #ab47bc, #4a1450); 
 
 .historico-chart {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
   height: 150px;
   padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
 }
 
 .historico-bar-col {
@@ -486,7 +553,8 @@ body.dark .legenda-ips { background: linear-gradient(180deg, #ab47bc, #4a1450); 
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  flex: 1;
+  flex: 1 0 auto;
+  min-width: 40px;
   max-width: 70px;
 }
 
@@ -1467,6 +1535,20 @@ body.dark .historico-bar-fill-ip {
 
   .stat-label {
     font-size: 0.55rem;
+  }
+
+  .filtro-periodo {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .filtro-periodo input[type="date"] {
+    font-size: 0.72rem;
+    padding: 5px 6px;
+  }
+  .filtro-label {
+    font-size: 0.72rem;
+    width: 100%;
+    text-align: center;
   }
 
   .numbers-card {

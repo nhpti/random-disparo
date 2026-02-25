@@ -106,6 +106,13 @@ function App() {
   const [savingConv, setSavingConv] = useState(null);
   const [activityLog, setActivityLog] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
+  // Filtro por período
+  const hoje = new Date().toISOString().split('T')[0];
+  const [filtroInicio, setFiltroInicio] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() - 6);
+    return d.toISOString().split('T')[0];
+  });
+  const [filtroFim, setFiltroFim] = useState(hoje);
   const inputRef = useRef(null);
   const toastTimeout = useRef(null);
 
@@ -195,11 +202,11 @@ function App() {
     if (!session || !config) return;
     try {
       const token = session.access_token;
-      const hoje = new Date().toISOString().split('T')[0];
+      const hj = new Date().toISOString().split('T')[0];
       const [nums, st, conv, logs] = await Promise.all([
         config.apiGet(token),
-        config.apiStats(token),
-        config.apiGetConv(token, hoje),
+        config.apiStats(token, filtroInicio, filtroFim),
+        config.apiGetConv(token, hj),
         getActivityLog(token, produto),
       ]);
       setNumeros(nums);
@@ -214,7 +221,7 @@ function App() {
     } catch (err) {
       console.error(err);
     }
-  }, [session, config]);
+  }, [session, config, filtroInicio, filtroFim]);
 
   useEffect(() => {
     if (!session || !config) return;
@@ -540,11 +547,11 @@ function App() {
           </div>
           <div className="stat-card stat-card-highlight">
             <span className="stat-value">{stats?.redirectsHoje ?? '—'}</span>
-            <span className="stat-label">Cliques hoje</span>
+            <span className="stat-label">Cliques período</span>
           </div>
           <div className="stat-card">
             <span className="stat-value">{stats?.uniqueHoje ?? '—'}</span>
-            <span className="stat-label">IPs únicos hoje</span>
+            <span className="stat-label">IPs únicos período</span>
           </div>
           <div className="stat-card">
             <span className="stat-value">{numeros.length}</span>
@@ -552,10 +559,21 @@ function App() {
           </div>
         </div>
 
-        {/* Histórico dos últimos 7 dias */}
+        {/* Filtro por Período */}
+        <div className="filtro-periodo">
+          <span className="filtro-label">📅 Período:</span>
+          <input type="date" value={filtroInicio} onChange={(e) => setFiltroInicio(e.target.value)} max={filtroFim} />
+          <span className="filtro-sep">até</span>
+          <input type="date" value={filtroFim} onChange={(e) => setFiltroFim(e.target.value)} min={filtroInicio} max={hoje} />
+          <button className="btn-filtro-hoje" onClick={() => { setFiltroInicio(hoje); setFiltroFim(hoje); }}>Hoje</button>
+          <button className="btn-filtro-7d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 6); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>7 dias</button>
+          <button className="btn-filtro-30d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 29); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>30 dias</button>
+        </div>
+
+        {/* Histórico do período */}
         {stats?.historico && stats.historico.length > 0 && (
           <div className="historico-section">
-            <h3 className="historico-title">📊 Últimos 7 dias</h3>
+            <h3 className="historico-title">📊 Histórico do Período</h3>
             <div className="historico-legenda">
               <span className="legenda-item"><span className="legenda-cor legenda-cliques"></span>Cliques</span>
               <span className="legenda-item"><span className="legenda-cor legenda-ips"></span>IPs únicos</span>
@@ -565,7 +583,7 @@ function App() {
                 const maxHist = Math.max(...stats.historico.map(x => x.cliques), 1);
                 const barCliques = (h.cliques / maxHist) * 100;
                 const barIps = (h.uniqueIps / maxHist) * 100;
-                const isHoje = i === stats.historico.length - 1;
+                const isHoje = h.isHoje;
                 return (
                   <div key={h.data} className={`historico-bar-col ${isHoje ? 'historico-hoje' : ''}`}>
                     <div className="historico-valores">
@@ -588,10 +606,10 @@ function App() {
           </div>
         )}
 
-        {/* Distribuição por Hora (hoje) */}
+        {/* Distribuição por Hora (período) */}
         {stats?.porHora && stats.porHora.some(v => v > 0) && (
           <div className="historico-section">
-            <h3 className="historico-title">🕐 Distribuição por Hora (Hoje)</h3>
+            <h3 className="historico-title">🕐 Distribuição por Hora</h3>
             <div className="hora-chart">
               {stats.porHora.map((count, hora) => {
                 const maxHora = Math.max(...stats.porHora, 1);
