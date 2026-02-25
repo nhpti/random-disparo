@@ -4,6 +4,7 @@ import {
   getConversoes, saveConversao,
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
   getConversoesBolsa, saveConversaoBolsa,
+  getActivityLog,
 } from './api';
 import { supabase } from './supabaseClient';
 import './App.css';
@@ -102,6 +103,7 @@ function App() {
   const [copiedNumero, setCopiedNumero] = useState(null);
   const [conversoes, setConversoes] = useState({});
   const [savingConv, setSavingConv] = useState(null);
+  const [activityLog, setActivityLog] = useState([]);
   const inputRef = useRef(null);
   const toastTimeout = useRef(null);
 
@@ -167,13 +169,15 @@ function App() {
     try {
       const token = session.access_token;
       const hoje = new Date().toISOString().split('T')[0];
-      const [nums, st, conv] = await Promise.all([
+      const [nums, st, conv, logs] = await Promise.all([
         config.apiGet(token),
         config.apiStats(token),
         config.apiGetConv(token, hoje),
+        getActivityLog(token, produto),
       ]);
       setNumeros(nums);
       setStats(st);
+      setActivityLog(logs || []);
       // Indexar conversões por número
       const convMap = {};
       for (const c of conv || []) {
@@ -197,6 +201,7 @@ function App() {
     setNumeros([]);
     setStats(null);
     setConversoes({});
+    setActivityLog([]);
     setInput('');
     setCopied(false);
     setConfirmDelete(null);
@@ -208,6 +213,7 @@ function App() {
     setNumeros([]);
     setStats(null);
     setConversoes({});
+    setActivityLog([]);
   };
 
   const handleAdd = async () => {
@@ -555,6 +561,34 @@ function App() {
           })}
         </div>
       </div>
+
+      {/* Log de Atividades */}
+      {activityLog.length > 0 && (
+        <div className="activity-card">
+          <div className="card-header">
+            <h2>📋 Log de Atividades</h2>
+          </div>
+          <div className="activity-list">
+            {activityLog.map((log) => {
+              const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
+              const acaoClass = { adicionou: 'acao-add', removeu: 'acao-remove', pausou: 'acao-pause', ativou: 'acao-activate' };
+              const dt = new Date(log.created_at);
+              const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+              return (
+                <div key={log.id} className={`activity-item ${acaoClass[log.acao] || ''}`}>
+                  <span className="activity-emoji">{acaoEmoji[log.acao] || '•'}</span>
+                  <div className="activity-info">
+                    <span className="activity-text">
+                      <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
+                    </span>
+                    <span className="activity-time">{timeStr}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Painel de Conversões */}
       {numeros.length > 0 && (

@@ -568,6 +568,73 @@ h1 {
   font-family: 'Consolas', monospace;
 }
 
+/* ── Activity Log Card ── */
+.activity-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  margin-top: 20px;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-top: 16px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg-input);
+  border-left: 3px solid var(--border);
+  transition: background 0.15s;
+}
+.activity-item:hover {
+  background: var(--bg-hover);
+}
+.activity-item.acao-add { border-left-color: #22c55e; }
+.activity-item.acao-remove { border-left-color: #ef4444; }
+.activity-item.acao-pause { border-left-color: #f59e0b; }
+.activity-item.acao-activate { border-left-color: var(--accent); }
+
+.activity-emoji {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.activity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.3;
+}
+.activity-text strong {
+  font-weight: 600;
+}
+
+.activity-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: 'Consolas', monospace;
+}
+
 /* ── Conversões Card ── */
 .conversoes-card {
   background: var(--bg-card);
@@ -1323,5 +1390,12 @@ h1 {
 
   .conversoes-card {
     padding: 20px 16px;
+  }
+
+  .activity-card {
+    padding: 20px 16px;
+  }
+  .activity-list {
+    max-height: 260px;
   }
 }

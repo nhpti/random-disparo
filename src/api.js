@@ -148,3 +148,13 @@ export async function saveConversaoBolsa(payload, token) {
   if (!res.ok) throw new Error('Erro ao salvar conversão');
   return res.json();
 }
+
+// ── LOG DE ATIVIDADES ──
+export async function getActivityLog(token, produto) {
+  const query = produto ? `?produto=${produto}` : '';
+  const res = await fetch(`${API}/api/activity-log${query}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar atividades');
+  return res.json();
+}

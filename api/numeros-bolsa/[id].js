@@ -18,11 +18,29 @@ module.exports = async function handler(req, res) {
     const { id } = req.query;
 
     if (req.method === 'DELETE') {
+      // Buscar número antes de deletar para registrar no log
+      const { data: numData } = await supabase
+        .from('numeros_bolsa')
+        .select('numero')
+        .eq('id', id)
+        .single();
+
       const { error } = await supabase
         .from('numeros_bolsa')
         .delete()
         .eq('id', id);
       if (error) throw error;
+
+      // Registrar atividade
+      if (numData) {
+        await supabase.from('activity_log').insert({
+          produto: 'bolsa',
+          acao: 'removeu',
+          numero: numData.numero,
+          usuario: user.email || 'desconhecido'
+        });
+      }
+
       return res.status(200).json({ ok: true });
     }
 
@@ -35,6 +53,15 @@ module.exports = async function handler(req, res) {
         .select()
         .single();
       if (error) throw error;
+
+      // Registrar atividade
+      await supabase.from('activity_log').insert({
+        produto: 'bolsa',
+        acao: ativo ? 'ativou' : 'pausou',
+        numero: data.numero,
+        usuario: user.email || 'desconhecido'
+      });
+
       return res.status(200).json(data);
     }
 

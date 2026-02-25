@@ -40,6 +40,15 @@ module.exports = async function handler(req, res) {
         .single();
 
       if (error) throw error;
+
+      // Registrar atividade
+      await supabase.from('activity_log').insert({
+        produto: 'fgts',
+        acao: 'adicionou',
+        numero: numero.trim(),
+        usuario: user.email || 'desconhecido'
+      });
+
       return res.status(201).json(data);
     }
 
