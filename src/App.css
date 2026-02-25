@@ -461,6 +461,25 @@ h1 {
   background: var(--accent-light);
 }
 
+.btn-export-csv {
+  padding: 5px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+.btn-export-csv:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
 /* ── Test ── */
 .btn-test {
   padding: 10px 24px;

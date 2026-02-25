@@ -349,6 +349,41 @@ function App() {
     return Math.max(...stats.porNumero.map(s => s.total), 1);
   };
 
+  // ── Exportar CSV ──
+  const exportCSV = () => {
+    if (!stats || numeros.length === 0) return;
+    const sep = ';';
+    const linhas = [];
+    // Cabeçalho do relatório
+    linhas.push(`Relatório ${config.nome}`);
+    linhas.push(`Período: ${filtroInicio} até ${filtroFim}`);
+    linhas.push(`Total cliques: ${stats.redirectsHoje ?? 0}`);
+    linhas.push(`IPs únicos: ${stats.uniqueHoje ?? 0}`);
+    linhas.push('');
+    // Cabeçalho da tabela
+    linhas.push(['Número', 'Cliques', 'IPs Únicos', 'Status'].join(sep));
+    // Dados por número
+    numeros.forEach((n) => {
+      const st = getNumeroStats(n.numero);
+      linhas.push([
+        formatarNumero(n.numero),
+        st.total,
+        st.uniqueIps,
+        n.ativo !== false ? 'Ativo' : 'Pausado',
+      ].join(sep));
+    });
+    // Gerar e baixar arquivo
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const slug = config.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    a.href = url;
+    a.download = `relatorio-${slug}-${filtroInicio}-a-${filtroFim}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ══════════════════════════════════════
   // RENDER
   // ══════════════════════════════════════
@@ -568,6 +603,7 @@ function App() {
           <button className="btn-filtro-hoje" onClick={() => { setFiltroInicio(hoje); setFiltroFim(hoje); }}>Hoje</button>
           <button className="btn-filtro-7d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 6); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>7 dias</button>
           <button className="btn-filtro-30d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 29); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>30 dias</button>
+          <button className="btn-export-csv" onClick={exportCSV} title="Exportar dados como CSV">⬇ Exportar CSV</button>
         </div>
 
         {/* Histórico do período */}
