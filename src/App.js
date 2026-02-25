@@ -106,6 +106,8 @@ function App() {
   const [savingConv, setSavingConv] = useState(null);
   const [activityLog, setActivityLog] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [agoText, setAgoText] = useState('');
   // Filtro por período
   const hoje = new Date().toISOString().split('T')[0];
   const [filtroInicio, setFiltroInicio] = useState(() => {
@@ -212,6 +214,7 @@ function App() {
       setNumeros(nums);
       setStats(st);
       setActivityLog(logs || []);
+      setLastUpdated(new Date());
       // Indexar conversões por número
       const convMap = {};
       for (const c of conv || []) {
@@ -223,12 +226,54 @@ function App() {
     }
   }, [session, config, filtroInicio, filtroFim]);
 
+  // ── Polling adaptativo ──
+  const getPollingInterval = () => {
+    const hora = new Date().getHours();
+    return (hora >= 8 && hora < 20) ? 30000 : 120000; // 30s horário comercial, 2min fora
+  };
+
   useEffect(() => {
     if (!session || !config) return;
     fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+    let interval = setInterval(fetchData, getPollingInterval());
+
+    // Reajusta intervalo a cada 5 min (caso mude de período)
+    const recalc = setInterval(() => {
+      clearInterval(interval);
+      interval = setInterval(fetchData, getPollingInterval());
+    }, 300000);
+
+    // Pausar quando aba perde foco, retomar ao voltar
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(interval);
+      } else {
+        fetchData(); // atualiza imediatamente
+        interval = setInterval(fetchData, getPollingInterval());
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(recalc);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [fetchData, session, config]);
+
+  // ── Atualizar texto "há X seg" ──
+  useEffect(() => {
+    if (!lastUpdated) return;
+    const tick = () => {
+      const diff = Math.floor((Date.now() - lastUpdated.getTime()) / 1000);
+      if (diff < 5) setAgoText('agora');
+      else if (diff < 60) setAgoText(`há ${diff}s`);
+      else setAgoText(`há ${Math.floor(diff / 60)}min`);
+    };
+    tick();
+    const id = setInterval(tick, 5000);
+    return () => clearInterval(id);
+  }, [lastUpdated]);
 
   // Limpar dados ao trocar de produto
   const handleSelectProduto = (key) => {
@@ -560,6 +605,11 @@ function App() {
       </div>
       <h1>{config.emoji} {config.nome}</h1>
       <p className="subtitle">{config.desc}</p>
+      {lastUpdated && (
+        <span className="polling-indicator" title={`Última atualização: ${lastUpdated.toLocaleTimeString('pt-BR')}`}>
+          🟢 Atualizado {agoText}
+        </span>
+      )}
 
       {/* Link de Redirect */}
       <div className="redirect-section">
