@@ -458,51 +458,6 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  // ══════════════════════════════════════
-  // RENDER
-  // ══════════════════════════════════════
-
-  // ── Loading ──
-  if (authLoading) {
-    return (
-      <div className="page">
-        <div className="login-container">
-          <div className="loading-spinner"></div>
-          <p style={{ textAlign: 'center', marginTop: '16px' }} className="text-muted">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Login Screen ──
-  if (!session) {
-    return (
-      <div className="page">
-        <div className="login-container">
-          <div className="login-icon">🔒</div>
-          <h1>Random Disparo</h1>
-          <p className="subtitle">Faça login para acessar o painel</p>
-          <form className="login-form" onSubmit={handleLogin}>
-            <div className="input-group">
-              <span className="input-icon">✉</span>
-              <input type="email" placeholder="E-mail" value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)} required autoFocus />
-            </div>
-            <div className="input-group">
-              <span className="input-icon">🔑</span>
-              <input type="password" placeholder="Senha" value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)} required />
-            </div>
-            {loginError && <p className="login-error">{loginError}</p>}
-            <button type="submit" className="btn-login" disabled={loginLoading}>
-              {loginLoading ? 'Entrando...' : 'Entrar'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   // ── Dashboard Executivo (dados combinados) ──
   const execData = useMemo(() => {
     const f = dashboardStats.fgts;
@@ -555,6 +510,51 @@ function App() {
 
     return { cliquesHoje, ipsHoje, totalRedirects, totalNumeros, ativos, cliques30, ips30, historico, todosPorNumero, f, b };
   }, [dashboardStats]);
+
+  // ══════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════
+
+  // ── Loading ──
+  if (authLoading) {
+    return (
+      <div className="page">
+        <div className="login-container">
+          <div className="loading-spinner"></div>
+          <p style={{ textAlign: 'center', marginTop: '16px' }} className="text-muted">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Login Screen ──
+  if (!session) {
+    return (
+      <div className="page">
+        <div className="login-container">
+          <div className="login-icon">🔒</div>
+          <h1>Random Disparo</h1>
+          <p className="subtitle">Faça login para acessar o painel</p>
+          <form className="login-form" onSubmit={handleLogin}>
+            <div className="input-group">
+              <span className="input-icon">✉</span>
+              <input type="email" placeholder="E-mail" value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)} required autoFocus />
+            </div>
+            <div className="input-group">
+              <span className="input-icon">🔑</span>
+              <input type="password" placeholder="Senha" value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)} required />
+            </div>
+            {loginError && <p className="login-error">{loginError}</p>}
+            <button type="submit" className="btn-login" disabled={loginLoading}>
+              {loginLoading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   // ── Seleção de Produto ──
   if (!produto) {
