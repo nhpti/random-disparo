@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getNumeros, addNumero, deleteNumero, toggleNumero, getStats,
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
@@ -185,21 +185,15 @@ function App() {
     const fetchDashboard = async () => {
       try {
         const token = session.access_token;
-        // Calcular últimos 30 dias para o dashboard executivo
-        const hoje30 = new Date().toISOString().split('T')[0];
-        const d30 = new Date(); d30.setDate(d30.getDate() - 29);
-        const inicio30 = d30.toISOString().split('T')[0];
-        const [fgtsStats, bolsaStats, fgtsNums, bolsaNums, fgtsStats30, bolsaStats30] = await Promise.all([
+        const [fgtsStats, bolsaStats, fgtsNums, bolsaNums] = await Promise.all([
           getStats(token),
           getStatsBolsa(token),
           getNumeros(token),
           getNumerosBolsa(token),
-          getStats(token, inicio30, hoje30),
-          getStatsBolsa(token, inicio30, hoje30),
         ]);
         setDashboardStats({
-          fgts: { ...fgtsStats, totalNumeros: fgtsNums.length, ativos: fgtsNums.filter(n => n.ativo !== false).length, stats30: fgtsStats30, numeros: fgtsNums },
-          bolsa: { ...bolsaStats, totalNumeros: bolsaNums.length, ativos: bolsaNums.filter(n => n.ativo !== false).length, stats30: bolsaStats30, numeros: bolsaNums },
+          fgts: { ...fgtsStats, totalNumeros: fgtsNums.length, ativos: fgtsNums.filter(n => n.ativo !== false).length },
+          bolsa: { ...bolsaStats, totalNumeros: bolsaNums.length, ativos: bolsaNums.filter(n => n.ativo !== false).length },
         });
       } catch (err) {
         console.error('Dashboard stats error:', err);
@@ -458,59 +452,6 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  // ── Dashboard Executivo (dados combinados) ──
-  const execData = useMemo(() => {
-    const f = dashboardStats.fgts;
-    const b = dashboardStats.bolsa;
-    if (!f || !b) return null;
-
-    // KPIs hoje
-    const cliquesHoje = (f.redirectsHoje || 0) + (b.redirectsHoje || 0);
-    const ipsHoje = (f.uniqueHoje || 0) + (b.uniqueHoje || 0);
-    const totalRedirects = (f.totalRedirects || 0) + (b.totalRedirects || 0);
-    const totalNumeros = (f.totalNumeros || 0) + (b.totalNumeros || 0);
-    const ativos = (f.ativos || 0) + (b.ativos || 0);
-
-    // 30 dias
-    const cliques30 = f.stats30 && b.stats30 ? (f.stats30.redirectsHoje || 0) + (b.stats30.redirectsHoje || 0) : 0;
-    const ips30 = f.stats30 && b.stats30 ? (f.stats30.uniqueHoje || 0) + (b.stats30.uniqueHoje || 0) : 0;
-
-    // Histórico combinado (30 dias)
-    let historico = [];
-    if (f.stats30?.historico && b.stats30?.historico) {
-      const bMap = {};
-      for (const h of b.stats30.historico) bMap[h.data] = h;
-      historico = f.stats30.historico.map(h => {
-        const bh = bMap[h.data] || { cliques: 0, uniqueIps: 0 };
-        return {
-          data: h.data,
-          dia: h.dia,
-          cliques: h.cliques + bh.cliques,
-          uniqueIps: h.uniqueIps + bh.uniqueIps,
-          fgtsCliques: h.cliques,
-          bolsaCliques: bh.cliques,
-          isHoje: h.isHoje,
-        };
-      });
-    }
-
-    // Top números combinados
-    const todosPorNumero = [];
-    if (f.stats30?.porNumero) {
-      for (const p of f.stats30.porNumero) {
-        todosPorNumero.push({ ...p, produto: 'CLT & FGTS' });
-      }
-    }
-    if (b.stats30?.porNumero) {
-      for (const p of b.stats30.porNumero) {
-        todosPorNumero.push({ ...p, produto: 'Bolsa Família' });
-      }
-    }
-    todosPorNumero.sort((a, b) => b.total - a.total);
-
-    return { cliquesHoje, ipsHoje, totalRedirects, totalNumeros, ativos, cliques30, ips30, historico, todosPorNumero, f, b };
-  }, [dashboardStats]);
-
   // ══════════════════════════════════════
   // RENDER
   // ══════════════════════════════════════
@@ -570,145 +511,11 @@ function App() {
             title={darkMode ? 'Modo claro' : 'Modo escuro'}>
             {darkMode ? '☀️' : '🌙'}
           </button>
-          <span className="user-email">👤 {session.user.email} {userRole && <span className={`role-badge role-${userRole}`}>{userRole}</span>}</span>
+            <span className="user-email">👤 {session.user.email}</span>
           <button className="btn-logout" onClick={handleLogout}>Sair</button>
         </div>
         <h1>Random Disparo</h1>
         <p className="subtitle">Selecione o produto para gerenciar</p>
-
-      {/* Dashboard Executivo */}
-      {execData && (
-        <div className="exec-dashboard">
-          <div className="exec-header">
-            <h2>📊 Dashboard Geral</h2>
-            <span className="exec-updated">Atualização automática a cada minuto</span>
-          </div>
-
-          {/* KPIs principais */}
-          <div className="exec-kpis">
-            <div className="exec-kpi exec-kpi-main">
-              <span className="exec-kpi-value">{execData.cliquesHoje.toLocaleString('pt-BR')}</span>
-              <span className="exec-kpi-label">Cliques Hoje</span>
-            </div>
-            <div className="exec-kpi">
-              <span className="exec-kpi-value">{execData.ipsHoje.toLocaleString('pt-BR')}</span>
-              <span className="exec-kpi-label">Pessoas (IPs) Hoje</span>
-            </div>
-            <div className="exec-kpi">
-              <span className="exec-kpi-value">{execData.cliques30.toLocaleString('pt-BR')}</span>
-              <span className="exec-kpi-label">Cliques 30 dias</span>
-            </div>
-            <div className="exec-kpi">
-              <span className="exec-kpi-value">{execData.totalRedirects.toLocaleString('pt-BR')}</span>
-              <span className="exec-kpi-label">Total Histórico</span>
-            </div>
-            <div className="exec-kpi">
-              <span className="exec-kpi-value">{execData.ativos}/{execData.totalNumeros}</span>
-              <span className="exec-kpi-label">Números Ativos</span>
-            </div>
-          </div>
-
-          {/* Comparativo FGTS vs Bolsa */}
-          <div className="exec-compare">
-            <h3>Comparativo Hoje</h3>
-            <div className="exec-compare-row">
-              <div className="exec-compare-side exec-compare-fgts">
-                <span className="exec-compare-emoji">💼</span>
-                <span className="exec-compare-name">CLT & FGTS</span>
-                <span className="exec-compare-val">{(execData.f.redirectsHoje || 0).toLocaleString('pt-BR')}</span>
-                <span className="exec-compare-sub">{(execData.f.uniqueHoje || 0)} IPs · {execData.f.ativos}/{execData.f.totalNumeros} núm.</span>
-              </div>
-              <div className="exec-compare-vs">VS</div>
-              <div className="exec-compare-side exec-compare-bolsa">
-                <span className="exec-compare-emoji">👨‍👩‍👧‍👦</span>
-                <span className="exec-compare-name">Bolsa Família</span>
-                <span className="exec-compare-val">{(execData.b.redirectsHoje || 0).toLocaleString('pt-BR')}</span>
-                <span className="exec-compare-sub">{(execData.b.uniqueHoje || 0)} IPs · {execData.b.ativos}/{execData.b.totalNumeros} núm.</span>
-              </div>
-            </div>
-            {/* Barra visual de proporção */}
-            {(() => {
-              const total = (execData.f.redirectsHoje || 0) + (execData.b.redirectsHoje || 0);
-              const fPct = total > 0 ? ((execData.f.redirectsHoje || 0) / total * 100).toFixed(0) : 50;
-              const bPct = total > 0 ? ((execData.b.redirectsHoje || 0) / total * 100).toFixed(0) : 50;
-              return (
-                <div className="exec-compare-bar">
-                  <div className="exec-bar-fgts" style={{ width: `${fPct}%` }}>{fPct}%</div>
-                  <div className="exec-bar-bolsa" style={{ width: `${bPct}%` }}>{bPct}%</div>
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Gráfico de evolução 30 dias */}
-          {execData.historico.length > 0 && (
-            <div className="exec-chart">
-              <h3>📈 Evolução — Últimos 30 dias</h3>
-              <div className="exec-chart-legend">
-                <span className="exec-legend-item"><span className="exec-legend-dot exec-legend-total"></span>Total</span>
-                <span className="exec-legend-item"><span className="exec-legend-dot exec-legend-fgts"></span>FGTS</span>
-                <span className="exec-legend-item"><span className="exec-legend-dot exec-legend-bolsa"></span>Bolsa</span>
-              </div>
-              <div className="exec-chart-area">
-                {execData.historico.map((h, i) => {
-                  const maxH = Math.max(...execData.historico.map(x => x.cliques), 1);
-                  const barTotal = (h.cliques / maxH) * 100;
-                  return (
-                    <div key={h.data} className={`exec-chart-col ${h.isHoje ? 'exec-chart-hoje' : ''}`}>
-                      <div className="exec-chart-values">
-                        <span className="exec-chart-val">{h.cliques}</span>
-                      </div>
-                      <div className="exec-chart-bar-container">
-                        <div className="exec-chart-bar-stack" style={{ height: `${barTotal}%` }}>
-                          {(() => {
-                            const fPct = h.cliques > 0 ? (h.fgtsCliques / h.cliques * 100) : 50;
-                            return (
-                              <>
-                                <div className="exec-stack-fgts" style={{ height: `${fPct}%` }}></div>
-                                <div className="exec-stack-bolsa" style={{ height: `${100 - fPct}%` }}></div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                      <span className="exec-chart-day">{h.dia}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Top 10 Números */}
-          {execData.todosPorNumero.length > 0 && (
-            <div className="exec-ranking">
-              <h3>🏆 Top Números — 30 dias</h3>
-              <div className="exec-ranking-list">
-                {execData.todosPorNumero.slice(0, 10).map((n, i) => {
-                  const maxTop = execData.todosPorNumero[0]?.total || 1;
-                  const pct = (n.total / maxTop * 100);
-                  return (
-                    <div key={`${n.numero}-${n.produto}`} className="exec-rank-item">
-                      <span className="exec-rank-pos">#{i + 1}</span>
-                      <div className="exec-rank-info">
-                        <div className="exec-rank-top">
-                          <span className="exec-rank-num">{formatarNumero(n.numero)}</span>
-                          <span className={`exec-rank-badge ${n.produto === 'CLT & FGTS' ? 'exec-badge-fgts' : 'exec-badge-bolsa'}`}>{n.produto === 'CLT & FGTS' ? '💼' : '👨‍👩‍👧‍👦'} {n.produto}</span>
-                        </div>
-                        <div className="exec-rank-bar-bg">
-                          <div className="exec-rank-bar-fill" style={{ width: `${pct}%` }}></div>
-                        </div>
-                        <span className="exec-rank-stats">{n.total} cliques · {n.uniqueIps || 0} IPs únicos</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Botão Gerenciar Usuários (admin) */}
       {isAdmin && (
         <button className="btn-manage-users" onClick={() => setShowUsuarios(!showUsuarios)}>
