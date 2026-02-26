@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getNumeros, addNumero, deleteNumero, toggleNumero, getStats,
-  getConversoes, saveConversao,
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
-  getConversoesBolsa, saveConversaoBolsa,
   getActivityLog,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
 } from './api';
@@ -22,8 +20,6 @@ const PRODUTOS = {
     apiDel: deleteNumero,
     apiToggle: toggleNumero,
     apiStats: getStats,
-    apiGetConv: getConversoes,
-    apiSaveConv: saveConversao,
     testPath: '/api/fgts',
     numerosPath: '/api/numeros',
   },
@@ -37,8 +33,6 @@ const PRODUTOS = {
     apiDel: deleteNumeroBolsa,
     apiToggle: toggleNumeroBolsa,
     apiStats: getStatsBolsa,
-    apiGetConv: getConversoesBolsa,
-    apiSaveConv: saveConversaoBolsa,
     testPath: '/api/bolsa',
     numerosPath: '/api/numeros-bolsa',
   },
@@ -103,8 +97,6 @@ function App() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [copiedNumero, setCopiedNumero] = useState(null);
-  const [conversoes, setConversoes] = useState({});
-  const [savingConv, setSavingConv] = useState(null);
   const [activityLog, setActivityLog] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -217,23 +209,15 @@ function App() {
     if (!session || !config) return;
     try {
       const token = session.access_token;
-      const hj = new Date().toISOString().split('T')[0];
-      const [nums, st, conv, logs] = await Promise.all([
+      const [nums, st, logs] = await Promise.all([
         config.apiGet(token),
         config.apiStats(token, filtroInicio, filtroFim),
-        config.apiGetConv(token, hj),
         getActivityLog(token, produto),
       ]);
       setNumeros(nums);
       setStats(st);
       setActivityLog(logs || []);
       setLastUpdated(new Date());
-      // Indexar conversões por número
-      const convMap = {};
-      for (const c of conv || []) {
-        convMap[c.numero] = { mensagens: c.mensagens || 0, conversoes: c.conversoes || 0 };
-      }
-      setConversoes(convMap);
     } catch (err) {
       console.error(err);
     }
@@ -349,7 +333,6 @@ function App() {
   const handleSelectProduto = (key) => {
     setNumeros([]);
     setStats(null);
-    setConversoes({});
     setActivityLog([]);
     setInput('');
     setCopied(false);
@@ -361,7 +344,6 @@ function App() {
     setProduto(null);
     setNumeros([]);
     setStats(null);
-    setConversoes({});
     setActivityLog([]);
     setShowUsuarios(false);
   };
@@ -422,36 +404,6 @@ function App() {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleAdd();
-  };
-
-  // ── Conversões: atualizar campo local ──
-  const handleConvChange = (numero, field, value) => {
-    const val = parseInt(value, 10) || 0;
-    setConversoes(prev => ({
-      ...prev,
-      [numero]: { ...prev[numero], [field]: val },
-    }));
-  };
-
-  // ── Conversões: salvar no servidor ──
-  const handleSaveConv = async (numero) => {
-    if (!config) return;
-    setSavingConv(numero);
-    try {
-      const hoje = new Date().toISOString().split('T')[0];
-      const c = conversoes[numero] || { mensagens: 0, conversoes: 0 };
-      await config.apiSaveConv({
-        numero,
-        data: hoje,
-        mensagens: c.mensagens,
-        conversoes: c.conversoes,
-      }, getAccessToken());
-      showToast(`Conversões de ${formatarNumero(numero)} salvas!`);
-    } catch (err) {
-      showToast('Erro ao salvar conversões.', 'error');
-      console.error(err);
-    }
-    setSavingConv(null);
   };
 
   const getNumeroStats = (numero) => {
@@ -887,90 +839,6 @@ function App() {
           })}
         </div>
       </div>
-
-      {/* Painel de Conversões */}
-      {numeros.length > 0 && (
-        <div className="conversoes-card">
-          <div className="card-header">
-            <h2>📈 Funil de Conversão (Hoje)</h2>
-          </div>
-
-          {/* Resumo do funil */}
-          {(() => {
-            const totalCliques = stats?.redirectsHoje || 0;
-            const totalUnique = stats?.uniqueHoje || 0;
-            const totalMensagens = Object.values(conversoes).reduce((s, c) => s + (c.mensagens || 0), 0);
-            const totalConversoes = Object.values(conversoes).reduce((s, c) => s + (c.conversoes || 0), 0);
-            const taxaRepeticao = totalCliques > 0 ? (((totalCliques - totalUnique) / totalCliques) * 100).toFixed(1) : '0.0';
-            const taxaAbertura = totalUnique > 0 ? ((totalMensagens / totalUnique) * 100).toFixed(1) : '0.0';
-            const taxaConversao = totalMensagens > 0 ? ((totalConversoes / totalMensagens) * 100).toFixed(1) : '0.0';
-
-            return (
-              <div className="funil-resumo">
-                <div className="funil-step">
-                  <span className="funil-valor">{totalCliques}</span>
-                  <span className="funil-label">Cliques</span>
-                  <span className="funil-taxa funil-taxa-muted">{taxaRepeticao}% repetidos</span>
-                </div>
-                <span className="funil-arrow">→</span>
-                <div className="funil-step">
-                  <span className="funil-valor">{totalUnique}</span>
-                  <span className="funil-label">Pessoas (IPs)</span>
-                </div>
-                <span className="funil-arrow">→</span>
-                <div className="funil-step">
-                  <span className="funil-valor">{totalMensagens}</span>
-                  <span className="funil-label">Mensagens</span>
-                  <span className="funil-taxa">{taxaAbertura}%</span>
-                </div>
-                <span className="funil-arrow">→</span>
-                <div className="funil-step">
-                  <span className="funil-valor">{totalConversoes}</span>
-                  <span className="funil-label">Conversões</span>
-                  <span className="funil-taxa">{taxaConversao}%</span>
-                </div>
-              </div>
-            );
-          })()}
-
-          <p className="conv-desc">
-            Preencha quantas mensagens recebeu e quantas converteram hoje. A taxa de abertura usa IPs únicos como base real.
-          </p>
-
-          <div className="conv-list">
-            {numeros.map((n) => {
-              const c = conversoes[n.numero] || { mensagens: 0, conversoes: 0 };
-              const st = getNumeroStats(n.numero);
-              return (
-                <div key={n.id} className="conv-item">
-                  <div className="conv-numero">
-                    <span className="conv-num-label">{formatarNumero(n.numero)}</span>
-                    <span className="conv-cliques">{st.uniqueIps} pessoas · {st.total} cliques</span>
-                  </div>
-                  <div className="conv-inputs">
-                    <div className="conv-field">
-                      <label>Msgs</label>
-                      <input type="number" min="0" value={c.mensagens || ''}
-                        placeholder="0"
-                        onChange={(e) => handleConvChange(n.numero, 'mensagens', e.target.value)} />
-                    </div>
-                    <div className="conv-field">
-                      <label>Conv</label>
-                      <input type="number" min="0" value={c.conversoes || ''}
-                        placeholder="0"
-                        onChange={(e) => handleConvChange(n.numero, 'conversoes', e.target.value)} />
-                    </div>
-                    <button className="btn-save-conv" onClick={() => handleSaveConv(n.numero)}
-                      disabled={savingConv === n.numero}>
-                      {savingConv === n.numero ? '...' : '💾'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
     </div>
   );
