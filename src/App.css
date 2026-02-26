@@ -823,6 +823,162 @@ body.dark .historico-bar-fill-ip {
   font-family: 'Consolas', monospace;
 }
 
+/* ── Role Badge ── */
+.role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.role-admin { background: #e8f5e9; color: #2e7d32; }
+.role-operador { background: #e3f2fd; color: #1565c0; }
+.role-viewer { background: #fff3e0; color: #e65100; }
+body.dark .role-admin { background: rgba(76,175,80,0.15); color: #81c784; }
+body.dark .role-operador { background: rgba(33,150,243,0.15); color: #64b5f6; }
+body.dark .role-viewer { background: rgba(255,152,0,0.15); color: #ffb74d; }
+
+/* ── Gerenciar Usuários ── */
+.btn-manage-users {
+  display: block;
+  margin: 0 auto 20px;
+  padding: 10px 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.btn-manage-users:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.usuarios-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.usuarios-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn-close-usuarios {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.usuario-add-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.usuario-add-form input,
+.usuario-add-form select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+}
+.usuario-add-form input[type="email"] { flex: 1; min-width: 180px; }
+.usuario-add-form input[type="text"] { width: 130px; }
+.usuario-add-form select { width: 110px; }
+
+.usuarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.usuario-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  gap: 12px;
+}
+.usuario-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.usuario-email {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.usuario-role {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.usuario-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.usuario-actions select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-family: inherit;
+  outline: none;
+}
+.btn-remove-usuario {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.btn-remove-usuario:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
 /* ── Conversões Card ── */
 .conversoes-card {
   background: var(--bg-card);

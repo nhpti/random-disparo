@@ -5,6 +5,7 @@ import {
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
   getConversoesBolsa, saveConversaoBolsa,
   getActivityLog,
+  getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
 } from './api';
 import { supabase } from './supabaseClient';
 import './App.css';
@@ -108,6 +109,14 @@ function App() {
   const [logOpen, setLogOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [agoText, setAgoText] = useState('');
+  // Role do usuário
+  const [userRole, setUserRole] = useState(null);
+  // Painel de usuários (admin)
+  const [usuarios, setUsuarios] = useState([]);
+  const [showUsuarios, setShowUsuarios] = useState(false);
+  const [novoUsuarioEmail, setNovoUsuarioEmail] = useState('');
+  const [novoUsuarioSenha, setNovoUsuarioSenha] = useState('');
+  const [novoUsuarioRole, setNovoUsuarioRole] = useState('operador');
   // Filtro por período
   const hoje = new Date().toISOString().split('T')[0];
   const [filtroInicio, setFiltroInicio] = useState(() => {
@@ -145,12 +154,15 @@ function App() {
 
   // ── Auth ──
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
       setAuthLoading(false);
+      if (s) getMe(s.access_token).then(me => setUserRole(me.role)).catch(() => setUserRole('admin'));
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+      if (s) getMe(s.access_token).then(me => setUserRole(me.role)).catch(() => setUserRole('admin'));
+      else setUserRole(null);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -170,6 +182,7 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setProduto(null);
+    setUserRole(null);
   };
 
   const getAccessToken = () => session?.access_token || '';
@@ -275,6 +288,63 @@ function App() {
     return () => clearInterval(id);
   }, [lastUpdated]);
 
+  // ── Helpers de permissão ──
+  const canEdit = userRole === 'admin' || userRole === 'operador';
+  const isAdmin = userRole === 'admin';
+
+  // ── Usuários (admin) ──
+  const fetchUsuarios = useCallback(async () => {
+    if (!session || !isAdmin) return;
+    try {
+      const data = await getUsuarios(session.access_token);
+      setUsuarios(data);
+    } catch (err) {
+      console.error('Erro ao buscar usuários:', err);
+    }
+  }, [session, isAdmin]);
+
+  useEffect(() => {
+    if (showUsuarios) fetchUsuarios();
+  }, [showUsuarios, fetchUsuarios]);
+
+  const handleAddUsuario = async () => {
+    if (!novoUsuarioEmail.trim()) return;
+    try {
+      const result = await addUsuario(novoUsuarioEmail.trim(), novoUsuarioRole, novoUsuarioSenha.trim() || undefined, session.access_token);
+      setNovoUsuarioEmail('');
+      setNovoUsuarioSenha('');
+      setNovoUsuarioRole('operador');
+      if (result.senhaTemporaria) {
+        showToast(`Usuário criado! Senha: ${result.senhaTemporaria}`);
+      } else {
+        showToast('Usuário adicionado!');
+      }
+      fetchUsuarios();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleChangeRole = async (id, newRole) => {
+    try {
+      await updateUsuarioRole(id, newRole, session.access_token);
+      showToast('Role atualizada!');
+      fetchUsuarios();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleDeleteUsuario = async (id) => {
+    try {
+      await deleteUsuario(id, session.access_token);
+      showToast('Usuário removido.');
+      fetchUsuarios();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
   // Limpar dados ao trocar de produto
   const handleSelectProduto = (key) => {
     setNumeros([]);
@@ -293,6 +363,7 @@ function App() {
     setStats(null);
     setConversoes({});
     setActivityLog([]);
+    setShowUsuarios(false);
   };
 
   const handleAdd = async () => {
@@ -493,7 +564,55 @@ function App() {
         </div>
         <h1>Random Disparo</h1>
         <p className="subtitle">Selecione o produto para gerenciar</p>
+      {/* Botão Gerenciar Usuários (admin) */}
+      {isAdmin && (
+        <button className="btn-manage-users" onClick={() => setShowUsuarios(!showUsuarios)}>
+          👥 Gerenciar Usuários
+        </button>
+      )}
 
+      {/* Painel de Usuários */}
+      {showUsuarios && isAdmin && (
+        <div className="usuarios-card">
+          <div className="card-header">
+            <h2>👥 Usuários</h2>
+            <button className="btn-close-usuarios" onClick={() => setShowUsuarios(false)}>✕</button>
+          </div>
+
+          <div className="usuario-add-form">
+            <input type="email" placeholder="Email" value={novoUsuarioEmail}
+              onChange={(e) => setNovoUsuarioEmail(e.target.value)} />
+            <input type="text" placeholder="Senha (opcional)" value={novoUsuarioSenha}
+              onChange={(e) => setNovoUsuarioSenha(e.target.value)} />
+            <select value={novoUsuarioRole} onChange={(e) => setNovoUsuarioRole(e.target.value)}>
+              <option value="admin">Admin</option>
+              <option value="operador">Operador</option>
+              <option value="viewer">Viewer</option>
+            </select>
+            <button className="btn-add" onClick={handleAddUsuario}>+ Adicionar</button>
+          </div>
+
+          <div className="usuarios-list">
+            {usuarios.map((u) => (
+              <div key={u.id} className="usuario-item">
+                <div className="usuario-info">
+                  <span className="usuario-email">{u.email}</span>
+                  <span className={`usuario-role role-${u.role}`}>{u.role}</span>
+                </div>
+                <div className="usuario-actions">
+                  <select value={u.role} onChange={(e) => handleChangeRole(u.id, e.target.value)}>
+                    <option value="admin">Admin</option>
+                    <option value="operador">Operador</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                  <button className="btn-remove-usuario" onClick={() => handleDeleteUsuario(u.id)}
+                    title="Remover usuário">&times;</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
         <div className="product-selector">
           {Object.entries(PRODUTOS).map(([key, p]) => {
             const ds = dashboardStats[key];
@@ -600,7 +719,7 @@ function App() {
           title={darkMode ? 'Modo claro' : 'Modo escuro'}>
           {darkMode ? '☀️' : '🌙'}
         </button>
-        <span className="user-email">👤 {session.user.email}</span>
+        <span className="user-email">👤 {session.user.email} {userRole && <span className={`role-badge role-${userRole}`}>{userRole}</span>}</span>
         <button className="btn-logout" onClick={handleLogout}>Sair</button>
       </div>
       <h1>{config.emoji} {config.nome}</h1>
@@ -716,11 +835,13 @@ function App() {
           );
         })()}
 
+        {canEdit && (
         <div className="input-area">
           <input ref={inputRef} type="text" placeholder="Ex: 48999998888"
             value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} />
           <button className="btn-add" onClick={handleAdd}>+ Adicionar</button>
         </div>
+        )}
 
         <div className="numbers-list">
           {numeros.length === 0 && (
@@ -743,15 +864,19 @@ function App() {
                     </button>
                     <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
                     {semClique && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
+                    {canEdit && (
                     <button
                       className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'}`}
                       onClick={() => handleToggle(n.id, n.numero, isAtivo)}
                       title={isAtivo ? 'Pausar número' : 'Ativar número'}>
                       {isAtivo ? 'Ativo' : 'Pausado'}
                     </button>
+                    )}
+                    {canEdit && (
                     <button className="btn-remove"
                       onClick={() => setConfirmDelete({ id: n.id, numero: n.numero })}
                       title="Remover número">&times;</button>
+                    )}
                   </div>
                   <div className="num-bar-bg">
                     <div className="num-bar-fill" style={{ width: `${percent}%` }}></div>

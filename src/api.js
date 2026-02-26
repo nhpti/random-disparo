@@ -166,3 +166,64 @@ export async function getActivityLog(token, produto) {
   if (!res.ok) throw new Error('Erro ao buscar atividades');
   return res.json();
 }
+
+// ── USUÁRIOS / ROLES ──
+export async function getMe(token) {
+  const res = await fetch(`${API}/api/me`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar perfil');
+  return res.json();
+}
+
+export async function getUsuarios(token) {
+  const res = await fetch(`${API}/api/usuarios`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar usuários');
+  return res.json();
+}
+
+export async function addUsuario(email, role, senha, token) {
+  const res = await fetch(`${API}/api/usuarios`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ email, role, senha }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Erro ao adicionar usuário');
+  }
+  return res.json();
+}
+
+export async function updateUsuarioRole(id, role, token) {
+  const res = await fetch(`${API}/api/usuarios/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ role }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Erro ao alterar role');
+  }
+  return res.json();
+}
+
+export async function deleteUsuario(id, token) {
+  const res = await fetch(`${API}/api/usuarios/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Erro ao remover usuário');
+  }
+  return res.json();
+}

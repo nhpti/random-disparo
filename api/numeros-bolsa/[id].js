@@ -1,18 +1,17 @@
 const { supabase } = require('../../lib/supabase');
-const { verifyAuth } = require('../../lib/auth');
+const { verifyAuthWithRole } = require('../../lib/auth');
 
-// DELETE /api/numeros-bolsa/:id — remover número (autenticado)
-// PATCH  /api/numeros-bolsa/:id — toggle ativo (autenticado)
+// DELETE /api/numeros-bolsa/:id — remover número (admin/operador)
+// PATCH  /api/numeros-bolsa/:id — toggle ativo (admin/operador)
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'DELETE, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const user = await verifyAuth(req);
-  if (!user) {
-    return res.status(401).json({ error: 'Não autorizado. Faça login.' });
-  }
+  const { user, role } = await verifyAuthWithRole(req);
+  if (!user) return res.status(401).json({ error: 'Não autorizado. Faça login.' });
+  if (role !== 'admin' && role !== 'operador') return res.status(403).json({ error: 'Sem permissão para esta ação.' });
 
   try {
     const { id } = req.query;
