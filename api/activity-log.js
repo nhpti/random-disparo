@@ -17,6 +17,9 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Cache na CDN por 15s
+  res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
+
   try {
     const produto = req.query.produto || null;
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getNumeros, addNumero, deleteNumero, toggleNumero, getStats,
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
-  getActivityLog,
+  getActivityLog, getDashboardStats,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
 } from './api';
 import { supabase } from './supabaseClient';
@@ -184,23 +184,14 @@ function App() {
     if (!session || produto) return;
     const fetchDashboard = async () => {
       try {
-        const token = session.access_token;
-        const [fgtsStats, bolsaStats, fgtsNums, bolsaNums] = await Promise.all([
-          getStats(token),
-          getStatsBolsa(token),
-          getNumeros(token),
-          getNumerosBolsa(token),
-        ]);
-        setDashboardStats({
-          fgts: { ...fgtsStats, totalNumeros: fgtsNums.length, ativos: fgtsNums.filter(n => n.ativo !== false).length },
-          bolsa: { ...bolsaStats, totalNumeros: bolsaNums.length, ativos: bolsaNums.filter(n => n.ativo !== false).length },
-        });
+        const data = await getDashboardStats(session.access_token);
+        setDashboardStats(data);
       } catch (err) {
         console.error('Dashboard stats error:', err);
       }
     };
     fetchDashboard();
-    const interval = setInterval(fetchDashboard, 60000);
+    const interval = setInterval(fetchDashboard, 120000); // 2min (era 60s com 4 calls)
     return () => clearInterval(interval);
   }, [session, produto]);
 
@@ -226,7 +217,7 @@ function App() {
   // ── Polling adaptativo ──
   const getPollingInterval = () => {
     const hora = new Date().getHours();
-    return (hora >= 8 && hora < 20) ? 30000 : 120000; // 30s horário comercial, 2min fora
+    return (hora >= 8 && hora < 20) ? 60000 : 180000; // 60s horário comercial, 3min fora
   };
 
   useEffect(() => {

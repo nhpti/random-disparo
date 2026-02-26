@@ -167,6 +167,15 @@ export async function getActivityLog(token, produto) {
   return res.json();
 }
 
+// ── DASHBOARD STATS (unificado) ──
+export async function getDashboardStats(token) {
+  const res = await fetch(`${API}/api/dashboard-stats`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar dashboard stats');
+  return res.json();
+}
+
 // ── USUÁRIOS / ROLES ──
 export async function getMe(token) {
   const res = await fetch(`${API}/api/me`, {

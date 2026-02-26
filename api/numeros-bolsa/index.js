@@ -47,6 +47,9 @@ module.exports = async function handler(req, res) {
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: 'Não autorizado. Faça login.' });
 
+  // Cache na CDN por 15s
+  res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
+
   try {
     const { data, error } = await supabase
       .from('numeros_bolsa')

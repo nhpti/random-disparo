@@ -17,6 +17,9 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Cache na CDN da Vercel por 30s, stale-while-revalidate por 60s
+  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+
   try {
     // Usar horário de Brasília (UTC-3)
     const agora = new Date(Date.now() - 3 * 60 * 60 * 1000);
@@ -26,34 +29,40 @@ module.exports = async function handler(req, res) {
     const de = req.query.de || hoje;
     const ate = req.query.ate || hoje;
 
-    const { count: totalRedirects, error: e1 } = await supabase
-      .from('redirect_log_bolsa')
-      .select('*', { count: 'exact', head: true });
-    if (e1) throw e1;
+    // Rodar contagens e primeira página de logs EM PARALELO
+    const PAGE = 5000;
+    const [countTotal, countPeriodo, firstPage] = await Promise.all([
+      supabase.from('redirect_log_bolsa').select('*', { count: 'exact', head: true }),
+      supabase.from('redirect_log_bolsa').select('*', { count: 'exact', head: true })
+        .gte('created_at', `${de}T00:00:00`).lt('created_at', `${ate}T23:59:59.999`),
+      supabase.from('redirect_log_bolsa').select('numero, ip, created_at')
+        .gte('created_at', `${de}T00:00:00`).lt('created_at', `${ate}T23:59:59.999`)
+        .range(0, PAGE - 1).order('created_at', { ascending: true }),
+    ]);
 
-    const { count: redirectsPeriodo, error: e2 } = await supabase
-      .from('redirect_log_bolsa')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', `${de}T00:00:00`)
-      .lt('created_at', `${ate}T23:59:59.999`);
-    if (e2) throw e2;
+    if (countTotal.error) throw countTotal.error;
+    if (countPeriodo.error) throw countPeriodo.error;
+    if (firstPage.error) throw firstPage.error;
 
-    // Buscar em páginas de 1000 para contornar limite do Supabase
-    let logsPeriodo = [];
-    let from = 0;
-    const PAGE = 1000;
-    while (true) {
-      const { data: page, error: ePage } = await supabase
-        .from('redirect_log_bolsa')
-        .select('numero, ip, created_at')
-        .gte('created_at', `${de}T00:00:00`)
-        .lt('created_at', `${ate}T23:59:59.999`)
-        .range(from, from + PAGE - 1)
-        .order('created_at', { ascending: true });
-      if (ePage) throw ePage;
-      logsPeriodo = logsPeriodo.concat(page || []);
-      if (!page || page.length < PAGE) break;
-      from += PAGE;
+    const totalRedirects = countTotal.count;
+    const redirectsPeriodo = countPeriodo.count;
+
+    let logsPeriodo = firstPage.data || [];
+    if (logsPeriodo.length === PAGE) {
+      let from = PAGE;
+      while (true) {
+        const { data: page, error: ePage } = await supabase
+          .from('redirect_log_bolsa')
+          .select('numero, ip, created_at')
+          .gte('created_at', `${de}T00:00:00`)
+          .lt('created_at', `${ate}T23:59:59.999`)
+          .range(from, from + PAGE - 1)
+          .order('created_at', { ascending: true });
+        if (ePage) throw ePage;
+        logsPeriodo = logsPeriodo.concat(page || []);
+        if (!page || page.length < PAGE) break;
+        from += PAGE;
+      }
     }
 
     const contagemPeriodo = {};
