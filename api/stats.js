@@ -19,8 +19,8 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Cache na CDN da Vercel por 30s, stale-while-revalidate por 60s
-  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+  // Cache na CDN da Vercel por 60s, stale-while-revalidate por 120s
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
   try {
     // Usar horário de Brasília (UTC-3)
@@ -31,17 +31,20 @@ module.exports = async function handler(req, res) {
     const de = req.query.de || hoje;
     const ate = req.query.ate || hoje;
 
-    // Rodar contagens e primeira página de logs EM PARALELO (não sequencial)
-    const PAGE = 5000; // páginas maiores = menos round-trips
+    // Limites do período em horário de Brasília (UTC-3)
+    const inicioFiltro = `${de}T00:00:00-03:00`;
+    const fimFiltro = `${ate}T23:59:59.999-03:00`;
+
+    // Supabase retorna no máximo 1000 linhas por query (limite padrão do PostgREST)
+    const PAGE = 1000;
+
+    // Rodar contagens e primeira página de logs EM PARALELO
     const [countTotal, countPeriodo, firstPage] = await Promise.all([
-      // Total de redirects (todos os tempos)
       supabase.from('redirect_log').select('*', { count: 'exact', head: true }),
-      // Redirects no período
       supabase.from('redirect_log').select('*', { count: 'exact', head: true })
-        .gte('created_at', `${de}T00:00:00`).lt('created_at', `${ate}T23:59:59.999`),
-      // Primeira página de logs detalhados
+        .gte('created_at', inicioFiltro).lte('created_at', fimFiltro),
       supabase.from('redirect_log').select('numero, ip, created_at')
-        .gte('created_at', `${de}T00:00:00`).lt('created_at', `${ate}T23:59:59.999`)
+        .gte('created_at', inicioFiltro).lte('created_at', fimFiltro)
         .range(0, PAGE - 1).order('created_at', { ascending: true }),
     ]);
 
@@ -52,22 +55,26 @@ module.exports = async function handler(req, res) {
     const totalRedirects = countTotal.count;
     const redirectsPeriodo = countPeriodo.count;
 
-    // Buscar restante dos logs só se primeira página estiver cheia
+    // Buscar restante dos logs — em lotes paralelos para velocidade
     let logsPeriodo = firstPage.data || [];
-    if (logsPeriodo.length === PAGE) {
-      let from = PAGE;
-      while (true) {
-        const { data: page, error: ePage } = await supabase
-          .from('redirect_log')
-          .select('numero, ip, created_at')
-          .gte('created_at', `${de}T00:00:00`)
-          .lt('created_at', `${ate}T23:59:59.999`)
-          .range(from, from + PAGE - 1)
-          .order('created_at', { ascending: true });
-        if (ePage) throw ePage;
-        logsPeriodo = logsPeriodo.concat(page || []);
-        if (!page || page.length < PAGE) break;
-        from += PAGE;
+    if (logsPeriodo.length === PAGE && redirectsPeriodo > PAGE) {
+      const totalPages = Math.ceil(redirectsPeriodo / PAGE);
+      const BATCH = 5; // até 5 páginas em paralelo por vez
+      for (let batch = 1; batch < totalPages; batch += BATCH) {
+        const promises = [];
+        for (let p = batch; p < Math.min(batch + BATCH, totalPages); p++) {
+          promises.push(
+            supabase.from('redirect_log').select('numero, ip, created_at')
+              .gte('created_at', inicioFiltro).lte('created_at', fimFiltro)
+              .range(p * PAGE, (p + 1) * PAGE - 1)
+              .order('created_at', { ascending: true })
+          );
+        }
+        const results = await Promise.all(promises);
+        for (const r of results) {
+          if (r.error) throw r.error;
+          if (r.data) logsPeriodo = logsPeriodo.concat(r.data);
+        }
       }
     }
 

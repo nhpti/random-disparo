@@ -1,4 +1,5 @@
 const { supabase } = require('../lib/supabase');
+const { dispararWebhook } = require('../lib/webhook');
 
 // ══════════════════════════════════════════════════════
 // REDIRECT PÚBLICO — substitui o CurtLink
@@ -43,15 +44,24 @@ module.exports = async function handler(req, res) {
 
     // Registrar no log (async, não bloqueia o redirect)
     // Pular log se for teste (?test=1)
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
     if (!req.query.test) {
       supabase
         .from('redirect_log')
         .insert({
           numero: sorteado.numero,
-          ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown',
+          ip: clientIp,
         })
         .then(() => {})
         .catch(() => {});
+
+      // Disparar webhook para n8n
+      dispararWebhook('redirect.fgts', {
+        produto: 'CLT & FGTS',
+        numero: sorteado.numero,
+        ip: clientIp,
+        url: whatsappUrl,
+      });
     }
 
     return res.redirect(302, whatsappUrl);
