@@ -33,36 +33,46 @@ module.exports = async function handler(req, res) {
     const inicioHoje = `${hoje}T00:00:00-03:00`;
     const fimHoje = `${hoje}T23:59:59.999-03:00`;
 
-    // Todas as queries em paralelo
+    // Helper para buscar TODOS os registros com paginação automática
+    const PAGE_SIZE = 1000;
+    async function fetchAllRows(table, campo, inicio, fim) {
+      let allRows = [];
+      let page = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from(table)
+          .select(campo)
+          .gte('created_at', inicio)
+          .lte('created_at', fim)
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        if (error || !data || data.length === 0) break;
+        allRows = allRows.concat(data);
+        hasMore = data.length === PAGE_SIZE;
+        page++;
+      }
+      return allRows;
+    }
+
+    // Queries iniciais em paralelo (números + counts)
     const [
       fgtsNums, bolsaNums,
       fgtsRedirects, bolsaRedirects,
-      fgtsIps, bolsaIps,
-      fgtsTopNumeros, bolsaTopNumeros,
     ] = await Promise.all([
-      // Números cadastrados
       supabase.from('numeros').select('id, numero, ativo'),
       supabase.from('numeros_bolsa').select('id, numero, ativo'),
-      // Redirects hoje (count)
       supabase.from('redirect_log').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioHoje).lte('created_at', fimHoje),
       supabase.from('redirect_log_bolsa').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioHoje).lte('created_at', fimHoje),
-      // IPs para contar únicos
-      supabase.from('redirect_log').select('ip')
-        .gte('created_at', inicioHoje).lte('created_at', fimHoje)
-        .limit(2000),
-      supabase.from('redirect_log_bolsa').select('ip')
-        .gte('created_at', inicioHoje).lte('created_at', fimHoje)
-        .limit(2000),
-      // Top números mais acessados hoje (FGTS)
-      supabase.from('redirect_log').select('numero')
-        .gte('created_at', inicioHoje).lte('created_at', fimHoje)
-        .limit(5000),
-      // Top números mais acessados hoje (Bolsa)
-      supabase.from('redirect_log_bolsa').select('numero')
-        .gte('created_at', inicioHoje).lte('created_at', fimHoje)
-        .limit(5000),
+    ]);
+
+    // Buscar TODOS os IPs e números com paginação (em paralelo)
+    const [fgtsAllIps, bolsaAllIps, fgtsAllNumeros, bolsaAllNumeros] = await Promise.all([
+      fetchAllRows('redirect_log', 'ip', inicioHoje, fimHoje),
+      fetchAllRows('redirect_log_bolsa', 'ip', inicioHoje, fimHoje),
+      fetchAllRows('redirect_log', 'numero', inicioHoje, fimHoje),
+      fetchAllRows('redirect_log_bolsa', 'numero', inicioHoje, fimHoje),
     ]);
 
     // Contar IPs únicos
@@ -93,11 +103,11 @@ module.exports = async function handler(req, res) {
       gerado_em: new Date().toISOString(),
       fgts: {
         cliques_hoje: fgtsRedirects.count || 0,
-        ips_unicos_hoje: uniqueIps(fgtsIps.data),
+        ips_unicos_hoje: uniqueIps(fgtsAllIps),
         numeros_total: fgtsData.length,
         numeros_ativos: fgtsData.filter(n => n.ativo !== false).length,
         numeros_inativos: fgtsData.filter(n => n.ativo === false).length,
-        top_numeros: rankingNumeros(fgtsTopNumeros.data),
+        top_numeros: rankingNumeros(fgtsAllNumeros),
         lista_numeros: fgtsData.map(n => ({
           numero: n.numero,
           ativo: n.ativo !== false,
@@ -105,11 +115,11 @@ module.exports = async function handler(req, res) {
       },
       bolsa: {
         cliques_hoje: bolsaRedirects.count || 0,
-        ips_unicos_hoje: uniqueIps(bolsaIps.data),
+        ips_unicos_hoje: uniqueIps(bolsaAllIps),
         numeros_total: bolsaData.length,
         numeros_ativos: bolsaData.filter(n => n.ativo !== false).length,
         numeros_inativos: bolsaData.filter(n => n.ativo === false).length,
-        top_numeros: rankingNumeros(bolsaTopNumeros.data),
+        top_numeros: rankingNumeros(bolsaAllNumeros),
         lista_numeros: bolsaData.map(n => ({
           numero: n.numero,
           ativo: n.ativo !== false,
@@ -117,14 +127,14 @@ module.exports = async function handler(req, res) {
       },
       totais: {
         cliques_total: (fgtsRedirects.count || 0) + (bolsaRedirects.count || 0),
-        ips_unicos_total: uniqueIps([...(fgtsIps.data || []), ...(bolsaIps.data || [])]),
+        ips_unicos_total: uniqueIps([...fgtsAllIps, ...bolsaAllIps]),
         numeros_ativos_total: fgtsData.filter(n => n.ativo !== false).length + bolsaData.filter(n => n.ativo !== false).length,
       },
       // Texto formatado para enviar direto por email/whatsapp
       mensagem_formatada: montarMensagem(hoje, fgtsRedirects.count || 0, bolsaRedirects.count || 0,
-        uniqueIps(fgtsIps.data), uniqueIps(bolsaIps.data),
+        uniqueIps(fgtsAllIps), uniqueIps(bolsaAllIps),
         fgtsData, bolsaData,
-        rankingNumeros(fgtsTopNumeros.data), rankingNumeros(bolsaTopNumeros.data)),
+        rankingNumeros(fgtsAllNumeros), rankingNumeros(bolsaAllNumeros)),
     };
 
     return res.status(200).json(resumo);
