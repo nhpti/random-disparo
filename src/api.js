@@ -236,3 +236,21 @@ export async function deleteUsuario(id, token) {
   }
   return res.json();
 }
+
+// ── HEALTH STATUS (painel) ──
+export async function getHealthStatus(token) {
+  const res = await fetch(`${API}/api/health-status`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar health status');
+  return res.json();
+}
+
+// ── REALTIME CHART (último 60 min) ──
+export async function getRealtimeChart(token) {
+  const res = await fetch(`${API}/api/realtime-chart`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar dados em tempo real');
+  return res.json();
+}

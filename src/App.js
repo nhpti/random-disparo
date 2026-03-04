@@ -4,6 +4,7 @@ import {
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
   getActivityLog, getDashboardStats,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
+  getHealthStatus, getRealtimeChart,
 } from './api';
 import { supabase } from './supabaseClient';
 import './App.css';
@@ -101,6 +102,15 @@ function App() {
   const [logOpen, setLogOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [agoText, setAgoText] = useState('');
+  // Busca/Filtro (#4)
+  const [searchTerm, setSearchTerm] = useState('');
+  // Notificações/Health (#5)
+  const [healthAlerts, setHealthAlerts] = useState(null);
+  const [healthDismissed, setHealthDismissed] = useState(false);
+  // Gráfico tempo real (#6)
+  const [realtimeData, setRealtimeData] = useState(null);
+  // Aba ativa: painel / monitoramento (#7)
+  const [activeTab, setActiveTab] = useState('painel');
   // Role do usuário
   const [userRole, setUserRole] = useState(null);
   // Painel de usuários (admin)
@@ -267,6 +277,39 @@ function App() {
   const canEdit = userRole === 'admin' || userRole === 'operador';
   const isAdmin = userRole === 'admin';
 
+  // ── Health Status polling (cada 5 min) (#5) ──
+  useEffect(() => {
+    if (!session || !config) return;
+    const fetchHealth = async () => {
+      try {
+        const data = await getHealthStatus(session.access_token);
+        setHealthAlerts(data);
+        setHealthDismissed(false);
+      } catch (err) {
+        console.error('Health status error:', err);
+      }
+    };
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 300000); // 5 min
+    return () => clearInterval(interval);
+  }, [session, config]);
+
+  // ── Realtime Chart polling (cada 60s, só na aba monitoramento) (#6) ──
+  useEffect(() => {
+    if (!session || !config || activeTab !== 'monitoramento') return;
+    const fetchRealtime = async () => {
+      try {
+        const data = await getRealtimeChart(session.access_token);
+        setRealtimeData(data);
+      } catch (err) {
+        console.error('Realtime chart error:', err);
+      }
+    };
+    fetchRealtime();
+    const interval = setInterval(fetchRealtime, 60000);
+    return () => clearInterval(interval);
+  }, [session, config, activeTab]);
+
   // ── Usuários (admin) ──
   const fetchUsuarios = useCallback(async () => {
     if (!session || !isAdmin) return;
@@ -328,6 +371,11 @@ function App() {
     setInput('');
     setCopied(false);
     setConfirmDelete(null);
+    setSearchTerm('');
+    setHealthAlerts(null);
+    setHealthDismissed(false);
+    setRealtimeData(null);
+    setActiveTab('painel');
     setProduto(key);
   };
 
@@ -337,6 +385,10 @@ function App() {
     setStats(null);
     setActivityLog([]);
     setShowUsuarios(false);
+    setSearchTerm('');
+    setHealthAlerts(null);
+    setRealtimeData(null);
+    setActiveTab('painel');
   };
 
   const handleAdd = async () => {
@@ -407,6 +459,21 @@ function App() {
     if (!stats?.porNumero || stats.porNumero.length === 0) return 1;
     return Math.max(...stats.porNumero.map(s => s.total), 1);
   };
+
+  // ── Helper comparativo (#3) ──
+  const getComparativo = (atual, anterior) => {
+    if (!anterior || anterior === 0) return null;
+    const diff = ((atual - anterior) / anterior) * 100;
+    return { diff: Math.round(diff), up: diff >= 0 };
+  };
+
+  // ── Filtrar números por busca (#4) ──
+  const numerosFiltrados = numeros.filter((n) => {
+    if (!searchTerm.trim()) return true;
+    const termo = searchTerm.toLowerCase().replace(/\D/g, '');
+    const numLimpo = n.numero.replace(/\D/g, '');
+    return numLimpo.includes(termo) || formatarNumero(n.numero).toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   // ── Exportar CSV ──
   const exportCSV = () => {
@@ -569,6 +636,15 @@ function App() {
                       <span className="product-stat">
                         <span className="product-stat-value">{ds.redirectsHoje ?? 0}</span>
                         <span className="product-stat-label">cliques hoje</span>
+                        {ds.redirectsOntem > 0 && (() => {
+                          const cmp = getComparativo(ds.redirectsHoje, ds.redirectsOntem);
+                          if (!cmp) return null;
+                          return (
+                            <span className={`product-stat-compare ${cmp.up ? 'compare-up' : 'compare-down'}`}>
+                              {cmp.up ? '↑' : '↓'} {Math.abs(cmp.diff)}%
+                            </span>
+                          );
+                        })()}
                       </span>
                       <span className="product-stat-divider">·</span>
                       <span className="product-stat">
@@ -673,6 +749,52 @@ function App() {
         </span>
       )}
 
+      {/* Abas: Painel / Monitoramento (#7) */}
+      <div className="tab-bar">
+        <button className={`tab-btn ${activeTab === 'painel' ? 'tab-active' : ''}`} onClick={() => setActiveTab('painel')}>
+          📊 Painel
+        </button>
+        <button className={`tab-btn ${activeTab === 'monitoramento' ? 'tab-active' : ''}`} onClick={() => setActiveTab('monitoramento')}>
+          🔍 Monitoramento
+          {healthAlerts && !healthAlerts.ok && <span className="tab-badge">!</span>}
+        </button>
+      </div>
+
+      {/* Notificação de alertas (#5) */}
+      {activeTab === 'painel' && healthAlerts && !healthAlerts.ok && !healthDismissed && (
+        <div className="health-banner health-banner-danger">
+          <div className="health-banner-content">
+            <span className="health-banner-icon">🚨</span>
+            <div className="health-banner-text">
+              <strong>{healthAlerts.problemas.length} problema{healthAlerts.problemas.length > 1 ? 's' : ''} detectado{healthAlerts.problemas.length > 1 ? 's' : ''}</strong>
+              <span className="health-banner-detail">
+                {healthAlerts.problemas.slice(0, 2).map(p => p.mensagem).join(' · ')}
+              </span>
+            </div>
+            <button className="health-banner-action" onClick={() => setActiveTab('monitoramento')}>Ver detalhes →</button>
+            <button className="health-banner-dismiss" onClick={() => setHealthDismissed(true)}>✕</button>
+          </div>
+        </div>
+      )}
+      {activeTab === 'painel' && healthAlerts && healthAlerts.ok && healthAlerts.avisos?.length > 0 && !healthDismissed && (
+        <div className="health-banner health-banner-warn">
+          <div className="health-banner-content">
+            <span className="health-banner-icon">💡</span>
+            <div className="health-banner-text">
+              <strong>{healthAlerts.avisos.length} aviso{healthAlerts.avisos.length > 1 ? 's' : ''}</strong>
+              <span className="health-banner-detail">
+                {healthAlerts.avisos.slice(0, 2).map(a => a.mensagem).join(' · ')}
+              </span>
+            </div>
+            <button className="health-banner-action" onClick={() => setActiveTab('monitoramento')}>Ver →</button>
+            <button className="health-banner-dismiss" onClick={() => setHealthDismissed(true)}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ABA PAINEL ═══ */}
+      {activeTab === 'painel' && (
+      <>
       {/* Link de Redirect */}
       <div className="redirect-section">
         <h2>Link de Disparo</h2>
@@ -695,10 +817,37 @@ function App() {
           <div className="stat-card stat-card-highlight">
             <span className="stat-value">{stats?.redirectsHoje ?? '—'}</span>
             <span className="stat-label">Cliques período</span>
+            {/* Comparativo (#3) — usa historico se disponível */}
+            {(() => {
+              if (!stats?.historico || stats.historico.length < 2) return null;
+              const hojeH = stats.historico.find(h => h.isHoje);
+              const ontemH = stats.historico[stats.historico.length - 2];
+              if (!hojeH || !ontemH || ontemH.cliques === 0) return null;
+              const cmp = getComparativo(hojeH.cliques, ontemH.cliques);
+              if (!cmp) return null;
+              return (
+                <span className={`stat-compare ${cmp.up ? 'compare-up' : 'compare-down'}`}>
+                  {cmp.up ? '↑' : '↓'} {Math.abs(cmp.diff)}% vs {ontemH.dia}
+                </span>
+              );
+            })()}
           </div>
           <div className="stat-card">
             <span className="stat-value">{stats?.uniqueHoje ?? '—'}</span>
             <span className="stat-label">IPs únicos período</span>
+            {(() => {
+              if (!stats?.historico || stats.historico.length < 2) return null;
+              const hojeH = stats.historico.find(h => h.isHoje);
+              const ontemH = stats.historico[stats.historico.length - 2];
+              if (!hojeH || !ontemH || ontemH.uniqueIps === 0) return null;
+              const cmp = getComparativo(hojeH.uniqueIps, ontemH.uniqueIps);
+              if (!cmp) return null;
+              return (
+                <span className={`stat-compare ${cmp.up ? 'compare-up' : 'compare-down'}`}>
+                  {cmp.up ? '↑' : '↓'} {Math.abs(cmp.diff)}% vs {ontemH.dia}
+                </span>
+              );
+            })()}
           </div>
           <div className="stat-card">
             <span className="stat-value">{numeros.length}</span>
@@ -762,6 +911,26 @@ function App() {
           <span className="counter">{numeros.filter(n => n.ativo !== false).length} / {numeros.length}</span>
         </div>
 
+        {/* Busca/Filtro de números (#4) */}
+        {numeros.length > 5 && (
+          <div className="search-numeros">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Buscar número..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            {searchTerm && (
+              <button className="search-clear" onClick={() => setSearchTerm('')}>✕</button>
+            )}
+            {searchTerm && (
+              <span className="search-count">{numerosFiltrados.length} de {numeros.length}</span>
+            )}
+          </div>
+        )}
+
         {/* Alerta: números sem cliques */}
         {(() => {
           const semCliques = numeros.filter(n => {
@@ -787,10 +956,13 @@ function App() {
         )}
 
         <div className="numbers-list">
-          {numeros.length === 0 && (
+          {numerosFiltrados.length === 0 && !searchTerm && (
             <div className="empty-msg">Nenhum número cadastrado. Adicione acima.</div>
           )}
-          {numeros.map((n, idx) => {
+          {numerosFiltrados.length === 0 && searchTerm && (
+            <div className="empty-msg">Nenhum número encontrado para "{searchTerm}"</div>
+          )}
+          {numerosFiltrados.map((n, idx) => {
             const st = getNumeroStats(n.numero);
             const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
             const isAtivo = n.ativo !== false;
@@ -830,6 +1002,150 @@ function App() {
           })}
         </div>
       </div>
+      </>
+      )}
+
+      {/* ═══ ABA MONITORAMENTO (#7) ═══ */}
+      {activeTab === 'monitoramento' && (
+      <div className="monitoring-section">
+        {/* Status Cards */}
+        <div className="monitoring-grid">
+          <div className={`monitoring-status-card ${healthAlerts?.ok ? 'status-ok' : 'status-danger'}`}>
+            <span className="monitoring-status-icon">{healthAlerts?.ok ? '✅' : '🚨'}</span>
+            <div className="monitoring-status-info">
+              <span className="monitoring-status-title">{healthAlerts?.ok ? 'Sistema OK' : 'Problemas Detectados'}</span>
+              <span className="monitoring-status-detail">
+                Verificado às {healthAlerts?.hora_brasilia || '--:--'}
+              </span>
+            </div>
+          </div>
+
+          <div className="monitoring-stat-card">
+            <span className="monitoring-stat-value">{healthAlerts?.total_cliques_hoje ?? '—'}</span>
+            <span className="monitoring-stat-label">Cliques hoje (todos)</span>
+          </div>
+
+          <div className="monitoring-stat-card">
+            <span className="monitoring-stat-value">{healthAlerts?.total_cliques_1h ?? '—'}</span>
+            <span className="monitoring-stat-label">Última hora</span>
+          </div>
+
+          <div className="monitoring-stat-card">
+            <span className="monitoring-stat-value">
+              {healthAlerts?.numeros_ativos ? `${healthAlerts.numeros_ativos.fgts + healthAlerts.numeros_ativos.bolsa}` : '—'}
+            </span>
+            <span className="monitoring-stat-label">Números ativos</span>
+          </div>
+        </div>
+
+        {/* Gráfico tempo real (#6) */}
+        <div className="realtime-card">
+          <div className="realtime-header">
+            <h3>⚡ Cliques em Tempo Real</h3>
+            <span className="realtime-subtitle">Últimos 60 minutos · {realtimeData?.total ?? 0} total</span>
+          </div>
+          <div className="realtime-chart">
+            {realtimeData?.minutos ? realtimeData.minutos.map((val, i) => {
+              const heightPct = realtimeData.pico > 0 ? (val / realtimeData.pico) * 100 : 0;
+              const isRecent = i >= 55;
+              return (
+                <div key={i} className={`realtime-bar-col ${isRecent ? 'realtime-recent' : ''}`}
+                  title={`${60 - i} min atrás: ${val} cliques`}>
+                  <div className="realtime-bar-bg">
+                    <div className="realtime-bar-fill" style={{ height: `${Math.max(heightPct, val > 0 ? 3 : 0)}%` }}></div>
+                  </div>
+                </div>
+              );
+            }) : (
+              <div className="realtime-loading">Carregando dados...</div>
+            )}
+          </div>
+          <div className="realtime-labels">
+            <span>-60 min</span>
+            <span>-30 min</span>
+            <span>agora</span>
+          </div>
+        </div>
+
+        {/* Alertas e Avisos */}
+        {healthAlerts && (healthAlerts.problemas.length > 0 || healthAlerts.avisos.length > 0) && (
+          <div className="monitoring-alerts-card">
+            <h3>📋 Alertas e Avisos</h3>
+            {healthAlerts.problemas.length > 0 && (
+              <div className="monitoring-alert-group">
+                <h4 className="alert-group-title alert-danger-title">🚨 Problemas ({healthAlerts.problemas.length})</h4>
+                {healthAlerts.problemas.map((p, i) => (
+                  <div key={i} className="monitoring-alert-item alert-item-danger">
+                    <span>{p.mensagem}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {healthAlerts.avisos.length > 0 && (
+              <div className="monitoring-alert-group">
+                <h4 className="alert-group-title alert-warn-title">💡 Avisos ({healthAlerts.avisos.length})</h4>
+                {healthAlerts.avisos.map((a, i) => (
+                  <div key={i} className="monitoring-alert-item alert-item-warn">
+                    <span>{a.mensagem}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {healthAlerts && healthAlerts.problemas.length === 0 && healthAlerts.avisos.length === 0 && (
+          <div className="monitoring-alerts-card monitoring-all-clear">
+            <span className="all-clear-icon">🎉</span>
+            <span className="all-clear-text">Nenhum alerta ativo. Sistema funcionando normalmente!</span>
+          </div>
+        )}
+
+        {/* Info Workflows n8n */}
+        <div className="monitoring-workflows-card">
+          <h3>🤖 Workflows n8n</h3>
+          <div className="workflow-list">
+            <div className="workflow-item">
+              <span className="workflow-status-dot dot-active"></span>
+              <div className="workflow-info">
+                <span className="workflow-name">📧 Relatório Diário</span>
+                <span className="workflow-detail">Envio automático por e-mail às 22h · Resumo completo do dia</span>
+              </div>
+            </div>
+            <div className="workflow-item">
+              <span className="workflow-status-dot dot-active"></span>
+              <div className="workflow-info">
+                <span className="workflow-name">🚨 Alertas de Problemas</span>
+                <span className="workflow-detail">Verificação a cada 2h · Envia e-mail se detectar problemas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Atividade Recente */}
+        {activityLog.length > 0 && (
+          <div className="monitoring-activity-card">
+            <h3>📋 Atividade Recente</h3>
+            <div className="monitoring-activity-list">
+              {activityLog.slice(0, 10).map((log) => {
+                const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
+                const dt = new Date(log.created_at);
+                const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                return (
+                  <div key={log.id} className="monitoring-activity-item">
+                    <span className="monitoring-activity-emoji">{acaoEmoji[log.acao] || '•'}</span>
+                    <span className="monitoring-activity-text">
+                      <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
+                    </span>
+                    <span className="monitoring-activity-time">{timeStr}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+      )}
     </div>
     </div>
   );
