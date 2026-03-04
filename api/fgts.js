@@ -8,7 +8,7 @@ const { dispararWebhook } = require('../lib/webhook');
 
 // Número de fallback caso o banco esteja fora ou sem números
 // TROCAR pelo número principal de vocês ↓
-const FALLBACK_NUMBER = '5548999632212';
+const FALLBACK_NUMBER = '5548999980196';
 
 // Mensagem pré-preenchida que aparece no WhatsApp
 const MENSAGEM = '(b05)Olá Novo Horizonte! Quero sacar meu FGTS e receber agora!';
