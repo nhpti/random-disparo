@@ -351,6 +351,17 @@ h1 {
   margin-bottom: 20px;
 }
 
+.redirect-link-box.sms-link-box {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+}
+
+.sms-links-section {
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
 .redirect-link {
   flex: 1;
   font-family: 'Consolas', monospace;

@@ -157,6 +157,62 @@ export async function saveConversaoBolsa(payload, token) {
   return res.json();
 }
 
+// ── BOLSA FAMÍLIA (novo produto) ──
+export async function getNumerosBolsaFamilia(token) {
+  const res = await fetch(`${API}/api/numeros-bolsa-familia`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar números');
+  return res.json();
+}
+
+export async function addNumeroBolsaFamilia(numero, token) {
+  const res = await fetch(`${API}/api/numeros-bolsa-familia`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ numero }),
+  });
+  if (!res.ok) throw new Error('Erro ao adicionar');
+  return res.json();
+}
+
+export async function deleteNumeroBolsaFamilia(id, token) {
+  const res = await fetch(`${API}/api/numeros-bolsa-familia/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao remover');
+  return res.json();
+}
+
+export async function toggleNumeroBolsaFamilia(id, ativo, token) {
+  const res = await fetch(`${API}/api/numeros-bolsa-familia/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ativo }),
+  });
+  if (!res.ok) throw new Error('Erro ao alterar status');
+  return res.json();
+}
+
+export async function getStatsBolsaFamilia(token, de, ate) {
+  const params = [];
+  if (de) params.push(`de=${de}`);
+  if (ate) params.push(`ate=${ate}`);
+  const query = params.length ? `?${params.join('&')}` : '';
+  const res = await fetch(`${API}/api/stats-bolsa-familia${query}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar stats');
+  return res.json();
+}
+
 // ── LOG DE ATIVIDADES ──
 export async function getActivityLog(token, produto) {
   const query = produto ? `?produto=${produto}` : '';

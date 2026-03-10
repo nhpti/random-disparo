@@ -28,36 +28,40 @@ module.exports = async function handler(req, res) {
     const inicioOntem = `${ontem}T00:00:00-03:00`;
     const fimOntem = `${ontem}T23:59:59.999-03:00`;
 
-    // Rodar TODAS as queries em paralelo (6 hoje + 2 ontem)
+    // Rodar TODAS as queries em paralelo
     const [
-      fgtsNums, bolsaNums,
-      fgtsRedirects, bolsaRedirects,
-      fgtsIpCount, bolsaIpCount,
-      fgtsRedirectsOntem, bolsaRedirectsOntem,
+      fgtsNums, bolsaNums, bolsaFamNums,
+      fgtsRedirects, bolsaRedirects, bolsaFamRedirects,
+      fgtsIpCount, bolsaIpCount, bolsaFamIpCount,
+      fgtsRedirectsOntem, bolsaRedirectsOntem, bolsaFamRedirectsOntem,
     ] = await Promise.all([
-      // Números FGTS
+      // Números
       supabase.from('numeros').select('id, ativo'),
-      // Números Bolsa
       supabase.from('numeros_bolsa').select('id, ativo'),
-      // Redirects hoje FGTS (count, sem dados)
+      supabase.from('numeros_bolsa_familia').select('id, ativo'),
+      // Redirects hoje (count)
       supabase.from('redirect_log').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioHoje).lte('created_at', fimHoje),
-      // Redirects hoje Bolsa (count, sem dados)
       supabase.from('redirect_log_bolsa').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioHoje).lte('created_at', fimHoje),
-      // IPs FGTS — apenas primeira página (rápido, para contagem aproximada)
+      supabase.from('redirect_log_bolsa_familia').select('*', { count: 'exact', head: true })
+        .gte('created_at', inicioHoje).lte('created_at', fimHoje),
+      // IPs hoje
       supabase.from('redirect_log').select('ip')
         .gte('created_at', inicioHoje).lte('created_at', fimHoje)
         .limit(1000),
-      // IPs Bolsa — apenas primeira página
       supabase.from('redirect_log_bolsa').select('ip')
         .gte('created_at', inicioHoje).lte('created_at', fimHoje)
         .limit(1000),
-      // Redirects ontem FGTS (count, sem dados)
+      supabase.from('redirect_log_bolsa_familia').select('ip')
+        .gte('created_at', inicioHoje).lte('created_at', fimHoje)
+        .limit(1000),
+      // Redirects ontem (count)
       supabase.from('redirect_log').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioOntem).lte('created_at', fimOntem),
-      // Redirects ontem Bolsa (count, sem dados)
       supabase.from('redirect_log_bolsa').select('*', { count: 'exact', head: true })
+        .gte('created_at', inicioOntem).lte('created_at', fimOntem),
+      supabase.from('redirect_log_bolsa_familia').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioOntem).lte('created_at', fimOntem),
     ]);
 
@@ -65,7 +69,6 @@ module.exports = async function handler(req, res) {
     const countUniqueIps = async (firstRows, table, count) => {
       if (!firstRows || firstRows.length === 0) return 0;
       let allRows = firstRows;
-      // Se tem mais de 1000, buscar o restante em paralelo
       if (firstRows.length === 1000 && count > 1000) {
         const totalPages = Math.ceil(count / 1000);
         const promises = [];
@@ -88,11 +91,12 @@ module.exports = async function handler(req, res) {
 
     const fgtsData = fgtsNums.data || [];
     const bolsaData = bolsaNums.data || [];
+    const bolsaFamData = bolsaFamNums.data || [];
 
-    // Contar IPs únicos com paginação em paralelo
-    const [fgtsUnique, bolsaUnique] = await Promise.all([
+    const [fgtsUnique, bolsaUnique, bolsaFamUnique] = await Promise.all([
       countUniqueIps(fgtsIpCount.data, 'redirect_log', fgtsRedirects.count || 0),
       countUniqueIps(bolsaIpCount.data, 'redirect_log_bolsa', bolsaRedirects.count || 0),
+      countUniqueIps(bolsaFamIpCount.data, 'redirect_log_bolsa_familia', bolsaFamRedirects.count || 0),
     ]);
 
     return res.status(200).json({
@@ -109,6 +113,13 @@ module.exports = async function handler(req, res) {
         uniqueHoje: bolsaUnique,
         totalNumeros: bolsaData.length,
         ativos: bolsaData.filter(n => n.ativo !== false).length,
+      },
+      'bolsa-familia': {
+        redirectsHoje: bolsaFamRedirects.count || 0,
+        redirectsOntem: bolsaFamRedirectsOntem.count || 0,
+        uniqueHoje: bolsaFamUnique,
+        totalNumeros: bolsaFamData.length,
+        ativos: bolsaFamData.filter(n => n.ativo !== false).length,
       },
     });
   } catch (err) {

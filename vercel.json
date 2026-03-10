@@ -1,6 +1,10 @@
 {
   "rewrites": [
     { "source": "/fgts", "destination": "/api/fgts" },
-    { "source": "/bolsa", "destination": "/api/bolsa" }
+    { "source": "/bolsa", "destination": "/api/bolsa" },
+    { "source": "/bolsa-familia", "destination": "/api/bolsa-familia" },
+    { "source": "/sms-fgts", "destination": "/api/sms-fgts" },
+    { "source": "/sms-clt", "destination": "/api/sms-clt" },
+    { "source": "/sms-bolsa", "destination": "/api/sms-bolsa" }
   ]
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getNumeros, addNumero, deleteNumero, toggleNumero, getStats,
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
+  getNumerosBolsaFamilia, addNumeroBolsaFamilia, deleteNumeroBolsaFamilia, toggleNumeroBolsaFamilia, getStatsBolsaFamilia,
   getActivityLog, getDashboardStats,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
   getHealthStatus, getRealtimeChart,
@@ -25,10 +26,10 @@ const PRODUTOS = {
     numerosPath: '/api/numeros',
   },
   bolsa: {
-    nome: 'Bolsa Família',
+    nome: 'Randomizador Jeffinho',
     path: '/bolsa',
-    emoji: '👨‍👩‍👧‍👦',
-    desc: 'Gerenciador de números ativos — Bolsa Família',
+    emoji: '🎯',
+    desc: 'Gerenciador de números ativos — Randomizador Jeffinho',
     apiGet: getNumerosBolsa,
     apiAdd: addNumeroBolsa,
     apiDel: deleteNumeroBolsa,
@@ -36,6 +37,19 @@ const PRODUTOS = {
     apiStats: getStatsBolsa,
     testPath: '/api/bolsa',
     numerosPath: '/api/numeros-bolsa',
+  },
+  'bolsa-familia': {
+    nome: 'Bolsa Família',
+    path: '/bolsa-familia',
+    emoji: '👨‍👩‍👧‍👦',
+    desc: 'Gerenciador de números ativos — Bolsa Família',
+    apiGet: getNumerosBolsaFamilia,
+    apiAdd: addNumeroBolsaFamilia,
+    apiDel: deleteNumeroBolsaFamilia,
+    apiToggle: toggleNumeroBolsaFamilia,
+    apiStats: getStatsBolsaFamilia,
+    testPath: '/api/bolsa-familia',
+    numerosPath: '/api/numeros-bolsa-familia',
   },
 };
 
@@ -98,6 +112,7 @@ function App() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [copiedNumero, setCopiedNumero] = useState(null);
+  const [copiedSms, setCopiedSms] = useState(null);
   const [activityLog, setActivityLog] = useState([]);
   const [logOpen, setLogOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -443,6 +458,25 @@ function App() {
       showToast('Link copiado!');
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const handleCopySmsLink = (key, url) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedSms(key);
+      showToast('Link SMS copiado!');
+      setTimeout(() => setCopiedSms(null), 2000);
+    });
+  };
+
+  // Links SMS para disparo
+  const smsLinks = {
+    fgts: [
+      { key: 'sf1', label: 'SMS FGTS (sf1)', path: '/sms-fgts', domain: 'https://sms.nhpfgts.com' },
+      { key: 'sc1', label: 'SMS CLT (sc1)', path: '/sms-clt', domain: 'https://sms.nhpfgts.com' },
+    ],
+    'bolsa-familia': [
+      { key: 'sb1', label: 'SMS Bolsa (sb1)', path: '/sms-bolsa', domain: 'https://sms.nhpbolsa.com' },
+    ],
   };
 
   const handleKeyDown = (e) => {
@@ -808,6 +842,27 @@ function App() {
             {copied ? '✓ Copiado!' : <><CopyIcon size={14} /> Copiar</>}
           </button>
         </div>
+
+        {/* Links SMS */}
+        {smsLinks[produto] && smsLinks[produto].length > 0 && (
+          <div className="sms-links-section">
+            <h3 style={{ margin: '18px 0 8px', fontSize: '0.95rem', opacity: 0.85 }}>📲 Links para Disparo SMS</h3>
+            {smsLinks[produto].map(link => {
+              const smsUrl = (link.domain || window.location.origin) + link.path;
+              return (
+                <div className="redirect-link-box sms-link-box" key={link.key} style={{ marginBottom: 8 }}>
+                  <span className="redirect-link" style={{ fontSize: '0.85rem' }}>
+                    <strong style={{ marginRight: 8 }}>{link.label}</strong>
+                    {smsUrl}
+                  </span>
+                  <button className="btn-copy-main" onClick={() => handleCopySmsLink(link.key, smsUrl)}>
+                    {copiedSms === link.key ? '✓ Copiado!' : <><CopyIcon size={14} /> Copiar</>}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="stats-row">
           <div className="stat-card">
