@@ -1,13 +1,13 @@
 const { supabase } = require('../lib/supabase');
 const { dispararWebhook } = require('../lib/webhook');
+const { getFallbackNumber } = require('../lib/fallback');
 
 // ══════════════════════════════════════════════════════
 // REDIRECT PÚBLICO — SMS FGTS (sf1)
 // GET /sms-fgts → pega número aleatório → 302 → wa.me
 // ══════════════════════════════════════════════════════
 
-// Número de fallback caso o banco esteja fora ou sem números
-const FALLBACK_NUMBER = '5548996743343';
+const TABELA_NUMEROS = 'numeros';
 
 // Mensagem pré-preenchida que aparece no WhatsApp (código sf1)
 const MENSAGEM = '(sf1) Olá Novo Horizonte! Quero sacar meu FGTS e receber agora!';
@@ -29,8 +29,9 @@ module.exports = async function handler(req, res) {
     if (error) throw error;
 
     if (!numeros || numeros.length === 0) {
-      console.log(`[SMS-FGTS FALLBACK] Nenhum número cadastrado, usando fallback`);
-      return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
+      console.log(`[SMS-FGTS FALLBACK] Nenhum número cadastrado, buscando fallback ativo`);
+      const fb = await getFallbackNumber(TABELA_NUMEROS);
+      return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
     }
 
     // Escolher um aleatório
@@ -65,6 +66,7 @@ module.exports = async function handler(req, res) {
     return res.redirect(302, whatsappUrl);
   } catch (err) {
     console.error('[SMS-FGTS ERROR]', err);
-    return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
+    const fb = await getFallbackNumber(TABELA_NUMEROS);
+    return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
   }
 };

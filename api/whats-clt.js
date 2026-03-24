@@ -1,5 +1,6 @@
 const { supabase } = require('../lib/supabase');
 const { dispararWebhook } = require('../lib/webhook');
+const { getFallbackNumber } = require('../lib/fallback');
 
 // ══════════════════════════════════════════════════════
 // REDIRECT PÚBLICO — WHATSAPP CLT (c01)
@@ -7,7 +8,7 @@ const { dispararWebhook } = require('../lib/webhook');
 // Domínio: clt.nhcred.com
 // ══════════════════════════════════════════════════════
 
-const FALLBACK_NUMBER = '5548996743343';
+const TABELA_NUMEROS = 'numeros';
 
 const MENSAGEM = '(bc06) Olá! Vim através do WhatsApp e quero fazer o empréstimo para CLT.';
 
@@ -27,8 +28,9 @@ module.exports = async function handler(req, res) {
     if (error) throw error;
 
     if (!numeros || numeros.length === 0) {
-      console.log(`[WHATS-CLT FALLBACK] Nenhum número cadastrado, usando fallback`);
-      return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
+      console.log(`[WHATS-CLT FALLBACK] Nenhum número cadastrado, buscando fallback ativo`);
+      const fb = await getFallbackNumber(TABELA_NUMEROS);
+      return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
     }
 
     const sorteado = numeros[Math.floor(Math.random() * numeros.length)];
@@ -60,6 +62,7 @@ module.exports = async function handler(req, res) {
     return res.redirect(302, whatsappUrl);
   } catch (err) {
     console.error('[WHATS-CLT ERROR]', err);
-    return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
+    const fb = await getFallbackNumber(TABELA_NUMEROS);
+    return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
   }
 };

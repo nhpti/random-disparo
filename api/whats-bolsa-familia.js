@@ -1,5 +1,6 @@
 const { supabase } = require('../lib/supabase');
 const { dispararWebhook } = require('../lib/webhook');
+const { getFallbackNumber } = require('../lib/fallback');
 
 // ══════════════════════════════════════════════════════
 // REDIRECT PÚBLICO — WHATSAPP BOLSA FAMÍLIA (wb1)
@@ -7,7 +8,7 @@ const { dispararWebhook } = require('../lib/webhook');
 // Domínio: whats.nhpbolsa.com
 // ══════════════════════════════════════════════════════
 
-const FALLBACK_NUMBER = '5548999980196';
+const TABELA_NUMEROS = 'numeros_bolsa_familia';
 
 const MENSAGEM = '(b07) Olá! Vim através do WhatsApp e quero saber mais sobre o empréstimo Bolsa Família!';
 
@@ -27,8 +28,9 @@ module.exports = async function handler(req, res) {
     if (error) throw error;
 
     if (!numeros || numeros.length === 0) {
-      console.log(`[WHATS-BOLSA-FAMILIA FALLBACK] Nenhum número cadastrado, usando fallback`);
-      return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
+      console.log(`[WHATS-BOLSA-FAMILIA FALLBACK] Nenhum número cadastrado, buscando fallback ativo`);
+      const fb = await getFallbackNumber(TABELA_NUMEROS);
+      return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
     }
 
     const sorteado = numeros[Math.floor(Math.random() * numeros.length)];
@@ -60,6 +62,7 @@ module.exports = async function handler(req, res) {
     return res.redirect(302, whatsappUrl);
   } catch (err) {
     console.error('[WHATS-BOLSA-FAMILIA ERROR]', err);
-    return res.redirect(302, `https://wa.me/${FALLBACK_NUMBER}${textParam}`);
+    const fb = await getFallbackNumber(TABELA_NUMEROS);
+    return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
   }
 };
