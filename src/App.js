@@ -471,6 +471,9 @@ function App() {
   // Links SMS para disparo
   // Links extras de disparo (aparecem junto ao link principal)
   const extraDisparoLinks = {
+    fgts: [
+      { key: 'bc06', label: 'WhatsApp CLT (bc06)', path: '/clt', domain: 'https://clt.nhpcred.com' },
+    ],
     'bolsa-familia': [
       { key: 'b07', label: 'WhatsApp Bolsa Família (b07)', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
     ],
