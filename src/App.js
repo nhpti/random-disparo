@@ -469,6 +469,13 @@ function App() {
   };
 
   // Links SMS para disparo
+  // Links extras de disparo (aparecem junto ao link principal)
+  const extraDisparoLinks = {
+    'bolsa-familia': [
+      { key: 'b07', label: 'WhatsApp Bolsa Família (b07)', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
+    ],
+  };
+
   const smsLinks = {
     fgts: [
       { key: 'sf1', label: 'SMS FGTS (sf1)', path: '/sms-fgts', domain: 'https://sms.nhpfgts.com' },
@@ -842,6 +849,22 @@ function App() {
             {copied ? '✓ Copiado!' : <><CopyIcon size={14} /> Copiar</>}
           </button>
         </div>
+
+        {/* Links extras de disparo */}
+        {extraDisparoLinks[produto] && extraDisparoLinks[produto].map(link => {
+          const linkUrl = (link.domain || window.location.origin) + link.path;
+          return (
+            <div className="redirect-link-box" key={link.key} style={{ marginTop: 8 }}>
+              <span className="redirect-link">
+                <strong style={{ marginRight: 8 }}>{link.label}</strong>
+                {linkUrl}
+              </span>
+              <button className="btn-copy-main" onClick={() => handleCopySmsLink(link.key, linkUrl)}>
+                {copiedSms === link.key ? '✓ Copiado!' : <><CopyIcon size={14} /> Copiar</>}
+              </button>
+            </div>
+          );
+        })}
 
         {/* Links SMS */}
         {smsLinks[produto] && smsLinks[produto].length > 0 && (

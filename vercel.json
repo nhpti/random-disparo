@@ -5,6 +5,8 @@
     { "source": "/bolsa-familia", "destination": "/api/bolsa-familia" },
     { "source": "/sms-fgts", "destination": "/api/sms-fgts" },
     { "source": "/sms-clt", "destination": "/api/sms-clt" },
-    { "source": "/sms-bolsa", "destination": "/api/sms-bolsa" }
+    { "source": "/sms-bolsa", "destination": "/api/sms-bolsa" },
+    { "source": "/whats-bolsa-familia", "destination": "/api/whats-bolsa-familia" },
+    { "source": "/bf", "destination": "/api/whats-bolsa-familia" }
   ]
 }
