@@ -4,7 +4,7 @@ const { dispararWebhook } = require('../lib/webhook');
 // ══════════════════════════════════════════════════════
 // REDIRECT PÚBLICO — WHATSAPP CLT (c01)
 // GET /whats-clt → pega número aleatório → 302 → wa.me
-// Domínio: clt.nhpcred.com
+// Domínio: clt.nhcred.com
 // ══════════════════════════════════════════════════════
 
 const FALLBACK_NUMBER = '5548996743343';
