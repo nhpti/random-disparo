@@ -9,6 +9,8 @@
     { "source": "/whats-bolsa-familia", "destination": "/api/whats-bolsa-familia" },
     { "source": "/bf", "destination": "/api/whats-bolsa-familia" },
     { "source": "/whats-clt", "destination": "/api/whats-clt" },
-    { "source": "/clt", "destination": "/api/whats-clt" }
+    { "source": "/clt", "destination": "/api/whats-clt" },
+    { "source": "/whats-clt-jeffinho", "destination": "/api/whats-clt-jeffinho" },
+    { "source": "/jclt", "destination": "/api/whats-clt-jeffinho" }
   ]
 }

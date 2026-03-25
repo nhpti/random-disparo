@@ -473,6 +473,7 @@ function App() {
   const extraDisparoLinks = {
     fgts: [
       { key: 'bc06', label: 'WhatsApp CLT (bc06)', path: '/clt', domain: 'https://clt.nhcred.com' },
+      { key: 'cj3', label: 'Jeffinho CLT (cj3)', path: '/jclt', domain: 'https://clt.canaldojefinho.com' },
     ],
     'bolsa-familia': [
       { key: 'b07', label: 'WhatsApp Bolsa Família (b07)', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
