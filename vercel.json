@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/", "has": [{ "type": "host", "value": "clt.canaldojefinho.com" }], "destination": "/api/whats-clt-jeffinho" },
     { "source": "/fgts", "destination": "/api/fgts" },
     { "source": "/bolsa", "destination": "/api/bolsa" },
     { "source": "/bolsa-familia", "destination": "/api/bolsa-familia" },
