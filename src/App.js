@@ -1018,14 +1018,21 @@ function App() {
           </div>
         )}
 
-        {/* Alerta: números sem cliques */}
+        {/* Alerta: números sem cliques (só mostra se outros números têm tráfego significativo) */}
         {(() => {
-          const semCliques = numeros.filter(n => {
-            if (n.ativo === false) return false;
-            const st = getNumeroStats(n.numero);
-            return st.total === 0;
-          });
+          const ativos = numeros.filter(n => n.ativo !== false);
+          const comCliques = ativos.filter(n => getNumeroStats(n.numero).total > 0);
+          const semCliques = ativos.filter(n => getNumeroStats(n.numero).total === 0);
           if (semCliques.length === 0) return null;
+          // Calcula mediana de cliques dos números que têm tráfego
+          const cliquesOrdenados = comCliques.map(n => getNumeroStats(n.numero).total).sort((a, b) => a - b);
+          const mediana = cliquesOrdenados.length > 0
+            ? (cliquesOrdenados.length % 2 === 0
+              ? (cliquesOrdenados[cliquesOrdenados.length / 2 - 1] + cliquesOrdenados[cliquesOrdenados.length / 2]) / 2
+              : cliquesOrdenados[Math.floor(cliquesOrdenados.length / 2)])
+            : 0;
+          // Só mostra alerta se há tráfego significativo nos outros números
+          if (mediana < 5) return null;
           return (
             <div className="alerta-sem-cliques">
               <span className="alerta-icon">⚠️</span>
@@ -1054,8 +1061,17 @@ function App() {
             const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
             const isAtivo = n.ativo !== false;
             const semClique = isAtivo && st.total === 0;
+            // Só marca como warning se há tráfego significativo nos outros números
+            const ativosComCliques = numeros.filter(x => x.ativo !== false && getNumeroStats(x.numero).total > 0);
+            const cliquesOrd = ativosComCliques.map(x => getNumeroStats(x.numero).total).sort((a, b) => a - b);
+            const med = cliquesOrd.length > 0
+              ? (cliquesOrd.length % 2 === 0
+                ? (cliquesOrd[cliquesOrd.length / 2 - 1] + cliquesOrd[cliquesOrd.length / 2]) / 2
+                : cliquesOrd[Math.floor(cliquesOrd.length / 2)])
+              : 0;
+            const mostrarWarn = semClique && med >= 5;
             return (
-              <div key={n.id} className={`number-item ${!isAtivo ? 'number-item-paused' : ''} ${semClique ? 'number-item-warn' : ''}`}>
+              <div key={n.id} className={`number-item ${!isAtivo ? 'number-item-paused' : ''} ${mostrarWarn ? 'number-item-warn' : ''}`}>
                 <span className="num-index">{idx + 1}.</span>
                 <div className="num-info">
                   <div className="num-top-row">
@@ -1065,7 +1081,7 @@ function App() {
                       {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
                     </button>
                     <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
-                    {semClique && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
+                    {mostrarWarn && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
                     {canEdit && (
                     <button
                       className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'}`}
