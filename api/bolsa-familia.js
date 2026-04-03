@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
   try {
     const { data: numeros, error } = await supabase
       .from('numeros_bolsa_familia')
-      .select('numero')
+      .select('id, numero')
       .neq('ativo', false);
 
     if (error) throw error;
