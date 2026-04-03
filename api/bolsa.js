@@ -1,6 +1,7 @@
 const { supabase } = require('../lib/supabase');
 const { dispararWebhook } = require('../lib/webhook');
 const { getFallbackNumber } = require('../lib/fallback');
+const { getNextNumero } = require('../lib/round-robin');
 
 // ══════════════════════════════════════════════════════
 // REDIRECT PÚBLICO — BOLSA FAMÍLIA
@@ -32,7 +33,7 @@ module.exports = async function handler(req, res) {
       return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
     }
 
-    const sorteado = numeros[Math.floor(Math.random() * numeros.length)];
+    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros);
     const limpo = sorteado.numero.replace(/\D/g, '');
     const whatsappUrl = `https://wa.me/55${limpo}${textParam}`;
 
