@@ -36,7 +36,8 @@ module.exports = async function handler(req, res) {
     }
 
     // Round-robin: próximo número em ordem sequencial
-    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros);
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros, clientIp);
     const limpo = sorteado.numero.replace(/\D/g, '');
     const whatsappUrl = `https://wa.me/55${limpo}${textParam}`;
 
@@ -44,7 +45,6 @@ module.exports = async function handler(req, res) {
 
     // Registrar no log (async, não bloqueia o redirect)
     // Pular log se for teste (?test=1)
-    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
     if (!req.query.test) {
       supabase
         .from('redirect_log')

@@ -33,14 +33,14 @@ module.exports = async function handler(req, res) {
       return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
     }
 
-    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros);
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros, clientIp);
     const limpo = sorteado.numero.replace(/\D/g, '');
     const whatsappUrl = `https://wa.me/55${limpo}${textParam}`;
 
     console.log(`[BOLSA REDIRECT] ${new Date().toISOString()} → ${sorteado.numero} → ${whatsappUrl}`);
 
     // Pular log se for teste (?test=1)
-    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
     if (!req.query.test) {
       supabase
         .from('redirect_log_bolsa')

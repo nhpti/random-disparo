@@ -36,14 +36,14 @@ module.exports = async function handler(req, res) {
     }
 
     // Round-robin: próximo número em ordem sequencial
-    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros);
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros, clientIp);
     const limpo = sorteado.numero.replace(/\D/g, '');
     const whatsappUrl = `https://wa.me/55${limpo}${textParam}`;
 
     console.log(`[SMS-FGTS REDIRECT] ${new Date().toISOString()} → ${sorteado.numero} → ${whatsappUrl}`);
 
     // Registrar no log (async, não bloqueia o redirect)
-    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
     if (!req.query.test) {
       supabase
         .from('redirect_log')
