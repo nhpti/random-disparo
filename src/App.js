@@ -143,6 +143,8 @@ function App() {
   const [filtroFim, setFiltroFim] = useState(hoje);
   const inputRef = useRef(null);
   const toastTimeout = useRef(null);
+  const produtoRef = useRef(produto);
+  produtoRef.current = produto;
 
   const config = produto ? PRODUTOS[produto] : null;
   const redirectUrl = config ? window.location.origin + config.path : '';
@@ -223,6 +225,7 @@ function App() {
   // ── Fetch data (reage a produto e session) ──
   const fetchData = useCallback(async () => {
     if (!session || !config) return;
+    const fetchProduto = produto; // captura o produto no momento da chamada
     try {
       const token = session.access_token;
       const [nums, st, logs] = await Promise.all([
@@ -230,14 +233,16 @@ function App() {
         config.apiStats(token, filtroInicio, filtroFim),
         getActivityLog(token, produto),
       ]);
+      // Descarta resultado se o produto mudou durante o fetch
+      if (produtoRef.current !== fetchProduto) return;
       setNumeros(nums);
       setStats(st);
       setActivityLog(logs || []);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error(err);
+      if (produtoRef.current === fetchProduto) console.error(err);
     }
-  }, [session, config, filtroInicio, filtroFim]);
+  }, [session, config, produto, filtroInicio, filtroFim]);
 
   // ── Polling adaptativo ──
   const getPollingInterval = () => {
