@@ -1,6 +1,7 @@
 {
   "redirects": [
-    { "source": "/", "has": [{ "type": "host", "value": "clt.canaldojefinho.com" }], "destination": "/jclt", "statusCode": 302 }
+    { "source": "/", "has": [{ "type": "host", "value": "clt.canaldojefinho.com" }], "destination": "/jclt", "statusCode": 302 },
+    { "source": "/", "has": [{ "type": "host", "value": "whats.nhpbolsa.com" }], "destination": "/bf", "statusCode": 302 }
   ],
   "rewrites": [
     { "source": "/fgts", "destination": "/api/fgts" },
