@@ -43,6 +43,9 @@ module.exports = async function handler(req, res) {
 
     console.log(`[REDIRECT] ${new Date().toISOString()} → ${sorteado.numero} → ${whatsappUrl}`);
 
+    // Impedir cache no CDN/Cloudflare
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+
     // Registrar no log (async, não bloqueia o redirect)
     // Pular log se for teste (?test=1)
     if (!req.query.test) {
