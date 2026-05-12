@@ -11,7 +11,7 @@ const { getNextNumero } = require('../lib/round-robin');
 const TABELA_NUMEROS = 'numeros';
 
 // Mensagem pré-preenchida que aparece no WhatsApp
-const MENSAGEM = '(di01) Olá Novo Horizonte! Quero sacar meu FGTS e receber agora!';
+const MENSAGEM = '(di1) Olá Novo Horizonte! Quero sacar meu FGTS e receber agora!';
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
