@@ -10,7 +10,7 @@ const { getNextNumero } = require('../lib/round-robin');
 
 const TABELA_NUMEROS = 'numeros_bolsa';
 
-const MENSAGEM = '(cj1) Olá, vim através do Canal do Jefinho e quero saber mais sobre o empréstimo bolsa família';
+const MENSAGEM = '(cj1) Olá, vim através do Canal do Jefinho e quero saber mais sobre as modalidades de crédito oferecidas!';
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
