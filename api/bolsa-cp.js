@@ -11,7 +11,7 @@ const { getNextNumero } = require('../lib/round-robin');
 
 const TABELA_NUMEROS = 'numeros_bolsa_familia';
 
-const MENSAGEM = '(b09) Olá, gostaria de saber mais sobre o crédito CP!';
+const MENSAGEM = '(b09) Olá, gostaria de saber mais sobre o crédito pessoal!';
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
