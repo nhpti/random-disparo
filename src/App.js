@@ -482,6 +482,7 @@ function App() {
     ],
     'bolsa-familia': [
       { key: 'b07', label: 'WhatsApp Bolsa Família (b07)', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
+      { key: 'b09', label: 'WhatsApp Bolsa CP (b09)', path: '/cp', domain: 'https://cp.nhpbolsa.com' },
     ],
   };
 

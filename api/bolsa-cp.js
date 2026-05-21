@@ -1,0 +1,69 @@
+const { supabase } = require('../lib/supabase');
+const { dispararWebhook } = require('../lib/webhook');
+const { getFallbackNumber } = require('../lib/fallback');
+const { getNextNumero } = require('../lib/round-robin');
+
+// ══════════════════════════════════════════════════════
+// REDIRECT PÚBLICO — WHATSAPP BOLSA CP (b09)
+// GET /cp → pega número aleatório → 302 → wa.me
+// Domínio: cp.nhpbolsa.com
+// ══════════════════════════════════════════════════════
+
+const TABELA_NUMEROS = 'numeros_bolsa_familia';
+
+const MENSAGEM = '(b09) Olá, gostaria de saber mais sobre o crédito CP!';
+
+module.exports = async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const textParam = `?text=${encodeURIComponent(MENSAGEM)}`;
+
+  try {
+    const { data: numeros, error } = await supabase
+      .from('numeros_bolsa_familia')
+      .select('id, numero')
+      .neq('ativo', false);
+
+    if (error) throw error;
+
+    if (!numeros || numeros.length === 0) {
+      console.log(`[BOLSA-CP FALLBACK] Nenhum número cadastrado, buscando fallback ativo`);
+      const fb = await getFallbackNumber(TABELA_NUMEROS);
+      return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
+    }
+
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const sorteado = await getNextNumero(TABELA_NUMEROS, numeros, clientIp);
+    const limpo = sorteado.numero.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/55${limpo}${textParam}`;
+
+    console.log(`[BOLSA-CP REDIRECT] ${new Date().toISOString()} → ${sorteado.numero} → ${whatsappUrl}`);
+
+    if (!req.query.test) {
+      supabase
+        .from('redirect_log_bolsa_familia')
+        .insert({
+          numero: sorteado.numero,
+          ip: clientIp,
+        })
+        .then(() => {})
+        .catch(() => {});
+
+      dispararWebhook('redirect.bolsa-cp', {
+        produto: 'WhatsApp Bolsa CP',
+        codigo: 'b09',
+        numero: sorteado.numero,
+        ip: clientIp,
+        url: whatsappUrl,
+      });
+    }
+
+    return res.redirect(302, whatsappUrl);
+  } catch (err) {
+    console.error('[BOLSA-CP ERROR]', err);
+    const fb = await getFallbackNumber(TABELA_NUMEROS);
+    return res.redirect(302, `https://wa.me/55${fb || '0'}${textParam}`);
+  }
+};
