@@ -214,6 +214,62 @@ export async function getStatsBolsaFamilia(token, de, ate) {
 }
 
 // ── LOG DE ATIVIDADES ──
+// RENEGOCIACAO
+export async function getNumerosRenegociacao(token) {
+  const res = await fetch(`${API}/api/numeros-renegociacao`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar numeros');
+  return res.json();
+}
+
+export async function addNumeroRenegociacao(numero, token) {
+  const res = await fetch(`${API}/api/numeros-renegociacao`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ numero }),
+  });
+  if (!res.ok) throw new Error('Erro ao adicionar');
+  return res.json();
+}
+
+export async function deleteNumeroRenegociacao(id, token) {
+  const res = await fetch(`${API}/api/numeros-renegociacao/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao remover');
+  return res.json();
+}
+
+export async function toggleNumeroRenegociacao(id, ativo, token) {
+  const res = await fetch(`${API}/api/numeros-renegociacao/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ativo }),
+  });
+  if (!res.ok) throw new Error('Erro ao alterar status');
+  return res.json();
+}
+
+export async function getStatsRenegociacao(token, de, ate) {
+  const params = [];
+  if (de) params.push(`de=${de}`);
+  if (ate) params.push(`ate=${ate}`);
+  const query = params.length ? `?${params.join('&')}` : '';
+  const res = await fetch(`${API}/api/stats-renegociacao${query}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar stats');
+  return res.json();
+}
+
 export async function getActivityLog(token, produto) {
   const query = produto ? `?produto=${produto}` : '';
   const res = await fetch(`${API}/api/activity-log${query}`, {

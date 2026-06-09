@@ -3,6 +3,7 @@ import {
   getNumeros, addNumero, deleteNumero, toggleNumero, getStats,
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
   getNumerosBolsaFamilia, addNumeroBolsaFamilia, deleteNumeroBolsaFamilia, toggleNumeroBolsaFamilia, getStatsBolsaFamilia,
+  getNumerosRenegociacao, addNumeroRenegociacao, deleteNumeroRenegociacao, toggleNumeroRenegociacao, getStatsRenegociacao,
   getActivityLog, getDashboardStats,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
   getHealthStatus, getRealtimeChart,
@@ -50,6 +51,19 @@ const PRODUTOS = {
     apiStats: getStatsBolsaFamilia,
     testPath: '/api/bolsa-familia',
     numerosPath: '/api/numeros-bolsa-familia',
+  },
+  renegociacao: {
+    nome: 'Renegociacao',
+    path: '/renegociacao',
+    emoji: '↻',
+    desc: 'Gerenciador de numeros ativos - Renegociacao',
+    apiGet: getNumerosRenegociacao,
+    apiAdd: addNumeroRenegociacao,
+    apiDel: deleteNumeroRenegociacao,
+    apiToggle: toggleNumeroRenegociacao,
+    apiStats: getStatsRenegociacao,
+    testPath: '/api/renegociacao',
+    numerosPath: '/api/numeros-renegociacao',
   },
 };
 
@@ -117,6 +131,7 @@ function App() {
   const [logOpen, setLogOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [agoText, setAgoText] = useState('');
+  const [pendingToggleIds, setPendingToggleIds] = useState(new Set());
   // Busca/Filtro (#4)
   const [searchTerm, setSearchTerm] = useState('');
   // Notificações/Health (#5)
@@ -148,6 +163,7 @@ function App() {
 
   const config = produto ? PRODUTOS[produto] : null;
   const redirectUrl = config ? window.location.origin + config.path : '';
+  const numerosAtivos = numeros.filter(n => n.ativo !== false).length;
 
   // ── Dark Mode ──
   useEffect(() => {
@@ -441,19 +457,31 @@ function App() {
 
   const handleToggle = async (id, numero, ativoAtual) => {
     if (!config) return;
+    const novoStatus = !ativoAtual;
+    setPendingToggleIds(prev => new Set(prev).add(id));
+    setNumeros(prev => prev.map(n => n.id === id ? { ...n, ativo: novoStatus } : n));
+
     try {
-      const novoStatus = !ativoAtual;
-      await config.apiToggle(id, novoStatus, getAccessToken());
+      const atualizado = await config.apiToggle(id, novoStatus, getAccessToken());
+      if (atualizado) {
+        setNumeros(prev => prev.map(n => n.id === id ? { ...n, ...atualizado } : n));
+      }
       showToast(
         novoStatus
-          ? `Número ${formatarNumero(numero)} ativado!`
-          : `Número ${formatarNumero(numero)} pausado.`,
+          ? `Numero ${formatarNumero(numero)} ativado!`
+          : `Numero ${formatarNumero(numero)} pausado.`,
         novoStatus ? 'success' : 'error'
       );
-      fetchData();
     } catch (err) {
+      setNumeros(prev => prev.map(n => n.id === id ? { ...n, ativo: ativoAtual } : n));
       showToast('Erro ao alterar status.', 'error');
       console.error(err);
+    } finally {
+      setPendingToggleIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -938,7 +966,7 @@ function App() {
             })()}
           </div>
           <div className="stat-card">
-            <span className="stat-value">{numeros.length}</span>
+            <span className="stat-value">{numerosAtivos}</span>
             <span className="stat-label">Números ativos</span>
           </div>
         </div>
@@ -996,7 +1024,7 @@ function App() {
       <div className="numbers-card">
         <div className="card-header">
           <h2>Números</h2>
-          <span className="counter">{numeros.filter(n => n.ativo !== false).length} / {numeros.length}</span>
+          <span className="counter">{numerosAtivos} / {numeros.length}</span>
         </div>
 
         {/* Busca/Filtro de números (#4) */}
@@ -1085,10 +1113,14 @@ function App() {
                     {mostrarWarn && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
                     {canEdit && (
                     <button
-                      className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'}`}
+                      className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'} ${pendingToggleIds.has(n.id) ? 'btn-toggle-pending' : ''}`}
                       onClick={() => handleToggle(n.id, n.numero, isAtivo)}
+                      disabled={pendingToggleIds.has(n.id)}
                       title={isAtivo ? 'Pausar número' : 'Ativar número'}>
-                      {isAtivo ? 'Ativo' : 'Pausado'}
+                      <span className="toggle-track" aria-hidden="true">
+                        <span className="toggle-dot"></span>
+                      </span>
+                      <span className="toggle-label">{isAtivo ? 'Ativo' : 'Pausado'}</span>
                     </button>
                     )}
                     {canEdit && (
@@ -1136,7 +1168,7 @@ function App() {
 
           <div className="monitoring-stat-card">
             <span className="monitoring-stat-value">
-              {healthAlerts?.numeros_ativos ? `${healthAlerts.numeros_ativos.fgts + healthAlerts.numeros_ativos.bolsa}` : '—'}
+              {healthAlerts?.numeros_ativos ? Object.values(healthAlerts.numeros_ativos).reduce((total, valor) => total + Number(valor || 0), 0) : '—'}
             </span>
             <span className="monitoring-stat-label">Números ativos</span>
           </div>
@@ -1256,3 +1288,5 @@ function App() {
 }
 
 export default App;
+
+
