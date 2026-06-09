@@ -496,7 +496,7 @@ function App() {
   const handleCopySmsLink = (key, url) => {
     navigator.clipboard.writeText(url).then(() => {
       setCopiedSms(key);
-      showToast('Link SMS copiado!');
+      showToast('Link copiado!');
       setTimeout(() => setCopiedSms(null), 2000);
     });
   };
@@ -507,6 +507,7 @@ function App() {
     fgts: [
       { key: 'bc06', label: 'WhatsApp CLT (bc06)', path: '/clt', domain: 'https://clt.nhcred.com' },
       { key: 'cj3', label: 'Jeffinho CLT (cj3)', path: '/jclt', domain: 'https://clt.canaldojefinho.com' },
+      { key: 'di1', label: 'Disparo Interno FGTS (di1)', path: '/disparointerno', domain: 'https://disparo.nhpfgts.com' },
     ],
     'bolsa-familia': [
       { key: 'b07', label: 'WhatsApp Bolsa Família (b07)', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
@@ -523,6 +524,32 @@ function App() {
       { key: 'sb1', label: 'SMS Bolsa (sb1)', path: '/sms-bolsa', domain: 'https://sms.nhpbolsa.com' },
     ],
   };
+
+  const linksPorProduto = {
+    fgts: [
+      { key: 'b05', label: 'FGTS principal', tipo: 'Principal', codigo: 'b05', path: '/fgts' },
+      { key: 'di1', label: 'Disparo interno FGTS', tipo: 'Interno', codigo: 'di1', path: '/disparointerno', domain: 'https://disparo.nhpfgts.com' },
+      { key: 'bc06', label: 'WhatsApp CLT', tipo: 'WhatsApp', codigo: 'bc06', path: '/clt', domain: 'https://clt.nhcred.com' },
+      { key: 'sf1', label: 'SMS FGTS', tipo: 'SMS', codigo: 'sf1', path: '/sms-fgts', domain: 'https://sms.nhpfgts.com' },
+      { key: 'sc1', label: 'SMS CLT', tipo: 'SMS', codigo: 'sc1', path: '/sms-clt', domain: 'https://sms.nhpfgts.com' },
+    ],
+    bolsa: [
+      { key: 'cj1', label: 'Randomizador Jeffinho', tipo: 'Principal', codigo: 'cj1', path: '/bolsa' },
+      { key: 'cj3', label: 'Jeffinho CLT', tipo: 'Canal do Jefinho', codigo: 'cj3', path: '/jclt', domain: 'https://clt.canaldojefinho.com' },
+    ],
+    'bolsa-familia': [
+      { key: 'bf1', label: 'Bolsa Familia principal', tipo: 'Principal', codigo: 'bf1', path: '/bolsa-familia' },
+      { key: 'b07', label: 'WhatsApp Bolsa Familia', tipo: 'WhatsApp', codigo: 'b07', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
+      { key: 'b09', label: 'WhatsApp Bolsa CP', tipo: 'WhatsApp', codigo: 'b09', path: '/cp', domain: 'https://cp.nhpbolsa.com' },
+      { key: 'sb1', label: 'SMS Bolsa', tipo: 'SMS', codigo: 'sb1', path: '/sms-bolsa', domain: 'https://sms.nhpbolsa.com' },
+    ],
+    renegociacao: [
+      { key: 'b11', label: 'Renegociacao', tipo: 'Principal', codigo: 'b11', path: '/renegociacao', domain: 'https://reneg.nhpbolsa.com' },
+    ],
+  };
+
+  const getLinkUrl = (link) => (link.domain || window.location.origin) + link.path;
+  const linksProdutoAtual = linksPorProduto[produto] || [];
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleAdd();
@@ -833,6 +860,9 @@ function App() {
         <button className={`tab-btn ${activeTab === 'painel' ? 'tab-active' : ''}`} onClick={() => setActiveTab('painel')}>
           📊 Painel
         </button>
+        <button className={`tab-btn ${activeTab === 'links' ? 'tab-active' : ''}`} onClick={() => setActiveTab('links')}>
+          Links
+        </button>
         <button className={`tab-btn ${activeTab === 'monitoramento' ? 'tab-active' : ''}`} onClick={() => setActiveTab('monitoramento')}>
           🔍 Monitoramento
           {healthAlerts && !healthAlerts.ok && <span className="tab-badge">!</span>}
@@ -1139,6 +1169,74 @@ function App() {
         </div>
       </div>
       </>
+      )}
+
+      {/* ABA LINKS */}
+      {activeTab === 'links' && (
+      <div className="links-panel">
+        <div className="links-panel-header">
+          <div>
+            <h2>Links de Randomizacao</h2>
+            <p>Todos os links criados para disparos, agrupados por produto.</p>
+          </div>
+          <span className="links-count">{Object.values(linksPorProduto).flat().length} links</span>
+        </div>
+
+        {linksProdutoAtual.length > 0 && (
+          <div className="links-current">
+            <h3>Produto atual</h3>
+            <div className="links-grid">
+              {linksProdutoAtual.map((link) => {
+                const url = getLinkUrl(link);
+                const copyKey = `${produto}-${link.key}`;
+                return (
+                  <div className="link-card" key={copyKey}>
+                    <div className="link-card-top">
+                      <span className="link-type">{link.tipo}</span>
+                      <span className="link-code">{link.codigo}</span>
+                    </div>
+                    <strong>{link.label}</strong>
+                    <span className="link-url">{url}</span>
+                    <button className="btn-copy-main" onClick={() => handleCopySmsLink(copyKey, url)}>
+                      {copiedSms === copyKey ? 'Copiado!' : <><CopyIcon size={14} /> Copiar</>}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="links-all">
+          <h3>Todos os produtos</h3>
+          {Object.entries(linksPorProduto).map(([produtoKey, links]) => (
+            <div className="link-product-group" key={produtoKey}>
+              <div className="link-product-title">
+                <span>{PRODUTOS[produtoKey]?.nome || produtoKey}</span>
+                <small>{links.length} link{links.length > 1 ? 's' : ''}</small>
+              </div>
+              <div className="link-table">
+                {links.map((link) => {
+                  const url = getLinkUrl(link);
+                  const copyKey = `all-${produtoKey}-${link.key}`;
+                  return (
+                    <div className="link-row" key={copyKey}>
+                      <span className="link-row-label">
+                        <strong>{link.label}</strong>
+                        <small>{link.tipo} - codigo {link.codigo}</small>
+                      </span>
+                      <span className="link-row-url">{url}</span>
+                      <button className="btn-copy-main" onClick={() => handleCopySmsLink(copyKey, url)}>
+                        {copiedSms === copyKey ? 'Copiado!' : <><CopyIcon size={14} /> Copiar</>}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       )}
 
       {/* ═══ ABA MONITORAMENTO (#7) ═══ */}
