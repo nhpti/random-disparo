@@ -528,24 +528,24 @@ function App() {
   const linksPorProduto = {
     fgts: [
       { key: 'b05', label: 'FGTS principal', tipo: 'Principal', codigo: 'b05', path: '/fgts' },
-      { key: 'di1', label: 'Disparo interno FGTS', tipo: 'Interno', codigo: 'di1', path: '/disparointerno', domain: 'https://disparo.nhpfgts.com' },
+      { key: 'di1', label: 'Disparo interno FGTS', tipo: 'Interno', codigo: 'di1', path: '', domain: 'https://disparo.nhpfgts.com' },
       { key: 'bc06', label: 'WhatsApp CLT', tipo: 'WhatsApp', codigo: 'bc06', path: '/clt', domain: 'https://clt.nhcred.com' },
       { key: 'sf1', label: 'SMS FGTS', tipo: 'SMS', codigo: 'sf1', path: '/sms-fgts', domain: 'https://sms.nhpfgts.com' },
       { key: 'sc1', label: 'SMS CLT', tipo: 'SMS', codigo: 'sc1', path: '/sms-clt', domain: 'https://sms.nhpfgts.com' },
     ],
     bolsa: [
       { key: 'cj1', label: 'Randomizador Jeffinho', tipo: 'Principal', codigo: 'cj1', path: '/bolsa' },
-      { key: 'cj3', label: 'Jeffinho CLT', tipo: 'Canal do Jefinho', codigo: 'cj3', path: '/jclt', domain: 'https://clt.canaldojefinho.com' },
+      { key: 'cj3', label: 'Jeffinho CLT', tipo: 'Canal do Jefinho', codigo: 'cj3', path: '', domain: 'https://clt.canaldojefinho.com' },
     ],
     'bolsa-familia': [
       { key: 'bf1', label: 'Bolsa Familia principal', tipo: 'Principal', codigo: 'bf1', path: '/bolsa-familia' },
-      { key: 'b07', label: 'WhatsApp Bolsa Familia', tipo: 'WhatsApp', codigo: 'b07', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
-      { key: 'b09', label: 'WhatsApp Bolsa CP', tipo: 'WhatsApp', codigo: 'b09', path: '/cp', domain: 'https://cp.nhpbolsa.com' },
-      { key: 'b10', label: 'WhatsApp Refinanciamento', tipo: 'WhatsApp', codigo: 'b10', path: '/refin', domain: 'https://refin.nhpbolsa.com' },
+      { key: 'b07', label: 'WhatsApp Bolsa Familia', tipo: 'WhatsApp', codigo: 'b07', path: '', domain: 'https://whats.nhpbolsa.com' },
+      { key: 'b09', label: 'WhatsApp Bolsa CP', tipo: 'WhatsApp', codigo: 'b09', path: '', domain: 'https://cp.nhpbolsa.com' },
+      { key: 'b10', label: 'WhatsApp Refinanciamento', tipo: 'WhatsApp', codigo: 'b10', path: '', domain: 'https://refin.nhpbolsa.com' },
       { key: 'sb1', label: 'SMS Bolsa', tipo: 'SMS', codigo: 'sb1', path: '/sms-bolsa', domain: 'https://sms.nhpbolsa.com' },
     ],
     renegociacao: [
-      { key: 'b11', label: 'Renegociacao', tipo: 'Principal', codigo: 'b11', path: '/renegociacao', domain: 'https://reneg.nhpbolsa.com' },
+      { key: 'b11', label: 'Renegociacao', tipo: 'Principal', codigo: 'b11', path: '', domain: 'https://reneg.nhpbolsa.com' },
     ],
   };
 
