@@ -904,57 +904,8 @@ function App() {
       {/* ═══ ABA PAINEL ═══ */}
       {activeTab === 'painel' && (
       <>
-      {/* Link de Redirect */}
+      {/* Estatísticas */}
       <div className="redirect-section">
-        <h2>Link de Disparo</h2>
-        <p className="redirect-desc">
-          Este é o link que vai no template de disparo. Cada clique redireciona
-          automaticamente para um WhatsApp aleatório entre os números ativos.
-        </p>
-        <div className="redirect-link-box">
-          <span className="redirect-link">{redirectUrl}</span>
-          <button className="btn-copy-main" onClick={handleCopyLink}>
-            {copied ? '✓ Copiado!' : <><CopyIcon size={14} /> Copiar</>}
-          </button>
-        </div>
-
-        {/* Links extras de disparo */}
-        {extraDisparoLinks[produto] && extraDisparoLinks[produto].map(link => {
-          const linkUrl = (link.domain || window.location.origin) + link.path;
-          return (
-            <div className="redirect-link-box" key={link.key} style={{ marginTop: 8 }}>
-              <span className="redirect-link">
-                <strong style={{ marginRight: 8 }}>{link.label}</strong>
-                {linkUrl}
-              </span>
-              <button className="btn-copy-main" onClick={() => handleCopySmsLink(link.key, linkUrl)}>
-                {copiedSms === link.key ? '✓ Copiado!' : <><CopyIcon size={14} /> Copiar</>}
-              </button>
-            </div>
-          );
-        })}
-
-        {/* Links SMS */}
-        {smsLinks[produto] && smsLinks[produto].length > 0 && (
-          <div className="sms-links-section">
-            <h3 style={{ margin: '18px 0 8px', fontSize: '0.95rem', opacity: 0.85 }}>📲 Links para Disparo SMS</h3>
-            {smsLinks[produto].map(link => {
-              const smsUrl = (link.domain || window.location.origin) + link.path;
-              return (
-                <div className="redirect-link-box sms-link-box" key={link.key} style={{ marginBottom: 8 }}>
-                  <span className="redirect-link" style={{ fontSize: '0.85rem' }}>
-                    <strong style={{ marginRight: 8 }}>{link.label}</strong>
-                    {smsUrl}
-                  </span>
-                  <button className="btn-copy-main" onClick={() => handleCopySmsLink(link.key, smsUrl)}>
-                    {copiedSms === link.key ? '✓ Copiado!' : <><CopyIcon size={14} /> Copiar</>}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         <div className="stats-row">
           <div className="stat-card">
             <span className="stat-value">{stats?.totalRedirects ?? '—'}</span>
