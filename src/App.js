@@ -541,6 +541,7 @@ function App() {
       { key: 'bf1', label: 'Bolsa Familia principal', tipo: 'Principal', codigo: 'bf1', path: '/bolsa-familia' },
       { key: 'b07', label: 'WhatsApp Bolsa Familia', tipo: 'WhatsApp', codigo: 'b07', path: '/bf', domain: 'https://whats.nhpbolsa.com' },
       { key: 'b09', label: 'WhatsApp Bolsa CP', tipo: 'WhatsApp', codigo: 'b09', path: '/cp', domain: 'https://cp.nhpbolsa.com' },
+      { key: 'b10', label: 'WhatsApp Refinanciamento', tipo: 'WhatsApp', codigo: 'b10', path: '/refin', domain: 'https://refin.nhpbolsa.com' },
       { key: 'sb1', label: 'SMS Bolsa', tipo: 'SMS', codigo: 'sb1', path: '/sms-bolsa', domain: 'https://sms.nhpbolsa.com' },
     ],
     renegociacao: [
@@ -1130,7 +1131,7 @@ function App() {
             <h2>Links de Randomizacao</h2>
             <p>Todos os links criados para disparos, agrupados por produto.</p>
           </div>
-          <span className="links-count">{Object.values(linksPorProduto).flat().length} links</span>
+          <span className="links-count">{linksProdutoAtual.length} links</span>
         </div>
 
         {linksProdutoAtual.length > 0 && (
@@ -1158,35 +1159,7 @@ function App() {
           </div>
         )}
 
-        <div className="links-all">
-          <h3>Todos os produtos</h3>
-          {Object.entries(linksPorProduto).map(([produtoKey, links]) => (
-            <div className="link-product-group" key={produtoKey}>
-              <div className="link-product-title">
-                <span>{PRODUTOS[produtoKey]?.nome || produtoKey}</span>
-                <small>{links.length} link{links.length > 1 ? 's' : ''}</small>
-              </div>
-              <div className="link-table">
-                {links.map((link) => {
-                  const url = getLinkUrl(link);
-                  const copyKey = `all-${produtoKey}-${link.key}`;
-                  return (
-                    <div className="link-row" key={copyKey}>
-                      <span className="link-row-label">
-                        <strong>{link.label}</strong>
-                        <small>{link.tipo} - codigo {link.codigo}</small>
-                      </span>
-                      <span className="link-row-url">{url}</span>
-                      <button className="btn-copy-main" onClick={() => handleCopySmsLink(copyKey, url)}>
-                        {copiedSms === copyKey ? 'Copiado!' : <><CopyIcon size={14} /> Copiar</>}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+
       </div>
       )}
 
