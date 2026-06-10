@@ -4,7 +4,8 @@
     { "source": "/", "has": [{ "type": "host", "value": "whats.nhpbolsa.com" }], "destination": "/bf", "statusCode": 302 },
     { "source": "/", "has": [{ "type": "host", "value": "cp.nhpbolsa.com" }], "destination": "/cp", "statusCode": 302 },
     { "source": "/", "has": [{ "type": "host", "value": "reneg.nhpbolsa.com" }], "destination": "/renegociacao", "statusCode": 302 },
-    { "source": "/", "has": [{ "type": "host", "value": "disparo.nhpfgts.com" }], "destination": "/disparointerno", "statusCode": 302 }
+    { "source": "/", "has": [{ "type": "host", "value": "disparo.nhpfgts.com" }], "destination": "/disparointerno", "statusCode": 302 },
+    { "source": "/", "has": [{ "type": "host", "value": "refin.nhpbolsa.com" }], "destination": "/refin", "statusCode": 302 }
   ],
   "rewrites": [
     { "source": "/fgts", "destination": "/api/fgts" },
@@ -22,6 +23,8 @@
     { "source": "/disparointerno", "destination": "/api/fgts-disparointerno" },
     { "source": "/cp", "destination": "/api/bolsa-cp" },
     { "source": "/b09", "destination": "/api/bolsa-cp" },
-    { "source": "/renegociacao", "destination": "/api/renegociacao" }
+    { "source": "/renegociacao", "destination": "/api/renegociacao" },
+    { "source": "/refin", "destination": "/api/whats-refin" },
+    { "source": "/b10", "destination": "/api/whats-refin" }
   ]
 }
