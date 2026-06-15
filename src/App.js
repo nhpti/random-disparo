@@ -141,6 +141,8 @@ function App() {
   const [realtimeData, setRealtimeData] = useState(null);
   // Aba ativa: painel / monitoramento (#7)
   const [activeTab, setActiveTab] = useState('painel');
+  // Tooltip do gráfico tempo real
+  const [hoveredBar, setHoveredBar] = useState(null);
   // Role do usuário
   const [userRole, setUserRole] = useState(null);
   // Painel de usuários (admin)
@@ -1168,61 +1170,92 @@ function App() {
       {/* ═══ ABA MONITORAMENTO (#7) ═══ */}
       {activeTab === 'monitoramento' && (
       <div className="monitoring-section">
-        {/* Status Cards */}
-        <div className="monitoring-grid">
-          <div className={`monitoring-status-card ${healthAlerts?.ok ? 'status-ok' : 'status-danger'}`}>
-            <span className="monitoring-status-icon">{healthAlerts?.ok ? '✅' : '🚨'}</span>
-            <div className="monitoring-status-info">
-              <span className="monitoring-status-title">{healthAlerts?.ok ? 'Sistema OK' : 'Problemas Detectados'}</span>
-              <span className="monitoring-status-detail">
-                Verificado às {healthAlerts?.hora_brasilia || '--:--'}
-              </span>
+
+        {/* Hero Status Banner */}
+        <div className={`monitor-hero ${healthAlerts?.ok ? 'hero-ok' : 'hero-danger'}`}>
+          <div className="monitor-hero-left">
+            <div className={`monitor-hero-pulse ${healthAlerts?.ok ? 'pulse-ok' : 'pulse-danger'}`}></div>
+            <div>
+              <div className="monitor-hero-title">{healthAlerts?.ok ? 'Todos os sistemas operacionais' : 'Problemas detectados'}</div>
+              <div className="monitor-hero-sub">Verificado às {healthAlerts?.hora_brasilia || '--:--'} · Brasília</div>
             </div>
           </div>
-
-          <div className="monitoring-stat-card">
-            <span className="monitoring-stat-value">{healthAlerts?.total_cliques_hoje ?? '—'}</span>
-            <span className="monitoring-stat-label">Cliques hoje (todos)</span>
-          </div>
-
-          <div className="monitoring-stat-card">
-            <span className="monitoring-stat-value">{healthAlerts?.total_cliques_1h ?? '—'}</span>
-            <span className="monitoring-stat-label">Última hora</span>
-          </div>
-
-          <div className="monitoring-stat-card">
-            <span className="monitoring-stat-value">
-              {healthAlerts?.numeros_ativos ? Object.values(healthAlerts.numeros_ativos).reduce((total, valor) => total + Number(valor || 0), 0) : '—'}
-            </span>
-            <span className="monitoring-stat-label">Números ativos</span>
+          <div className="monitor-hero-stats">
+            <div className="monitor-hero-stat">
+              <span className="monitor-hero-stat-val">{healthAlerts?.total_cliques_hoje ?? '—'}</span>
+              <span className="monitor-hero-stat-lbl">cliques hoje</span>
+            </div>
+            <div className="monitor-hero-divider"></div>
+            <div className="monitor-hero-stat">
+              <span className="monitor-hero-stat-val">{healthAlerts?.total_cliques_1h ?? '—'}</span>
+              <span className="monitor-hero-stat-lbl">última hora</span>
+            </div>
+            <div className="monitor-hero-divider"></div>
+            <div className="monitor-hero-stat">
+              <span className="monitor-hero-stat-val">
+                {healthAlerts?.numeros_ativos ? Object.values(healthAlerts.numeros_ativos).reduce((t, v) => t + Number(v || 0), 0) : '—'}
+              </span>
+              <span className="monitor-hero-stat-lbl">números ativos</span>
+            </div>
           </div>
         </div>
 
         {/* Gráfico tempo real (#6) */}
         <div className="realtime-card">
           <div className="realtime-header">
-            <h3>⚡ Cliques em Tempo Real</h3>
-            <span className="realtime-subtitle">Últimos 60 minutos · {realtimeData?.total ?? 0} total</span>
+            <div className="realtime-header-left">
+              <span className="realtime-live-badge"><span className="live-dot"></span>AO VIVO</span>
+              <h3>Cliques em Tempo Real</h3>
+            </div>
+            <span className="realtime-subtitle">Últimos 60 min · <strong>{realtimeData?.total ?? 0}</strong> cliques</span>
           </div>
-          <div className="realtime-chart">
-            {realtimeData?.minutos ? realtimeData.minutos.map((val, i) => {
-              const heightPct = realtimeData.pico > 0 ? (val / realtimeData.pico) * 100 : 0;
-              const isRecent = i >= 55;
-              return (
-                <div key={i} className={`realtime-bar-col ${isRecent ? 'realtime-recent' : ''}`}
-                  title={`${60 - i} min atrás: ${val} cliques`}>
-                  <div className="realtime-bar-bg">
-                    <div className="realtime-bar-fill" style={{ height: `${Math.max(heightPct, val > 0 ? 3 : 0)}%` }}></div>
-                  </div>
+          <div className="realtime-chart-wrap">
+            {realtimeData?.minutos ? (
+              <>
+                <div className="realtime-grid-lines">
+                  <div className="grid-line"></div>
+                  <div className="grid-line"></div>
+                  <div className="grid-line"></div>
                 </div>
-              );
-            }) : (
+                <div className="realtime-chart">
+                  {realtimeData.minutos.map((val, i) => {
+                    const heightPct = realtimeData.pico > 0 ? (val / realtimeData.pico) * 100 : 0;
+                    const isRecent = i >= 55;
+                    const minutesAgo = 60 - i - 1;
+                    const label = minutesAgo === 0 ? 'agora' : `${minutesAgo} min atrás`;
+                    return (
+                      <div
+                        key={i}
+                        className={`realtime-bar-col ${isRecent ? 'realtime-recent' : ''} ${val > 0 ? 'has-value' : ''}`}
+                        onMouseEnter={() => setHoveredBar({ i, val, label })}
+                        onMouseLeave={() => setHoveredBar(null)}
+                      >
+                        {hoveredBar?.i === i && val > 0 && (
+                          <div className="bar-tooltip">
+                            <span className="bar-tooltip-val">{val}</span>
+                            <span className="bar-tooltip-lbl">{label}</span>
+                          </div>
+                        )}
+                        <div className="realtime-bar-bg">
+                          <div
+                            className="realtime-bar-fill"
+                            style={{ height: `${Math.max(heightPct, val > 0 ? 4 : 0)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
               <div className="realtime-loading">Carregando dados...</div>
             )}
           </div>
           <div className="realtime-labels">
             <span>-60 min</span>
+            <span>-45 min</span>
             <span>-30 min</span>
+            <span>-15 min</span>
             <span>agora</span>
           </div>
         </div>
@@ -1289,15 +1322,20 @@ function App() {
             <div className="monitoring-activity-list">
               {activityLog.slice(0, 10).map((log) => {
                 const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
+                const acaoColor = { adicionou: 'activity-add', removeu: 'activity-remove', pausou: 'activity-pause', ativou: 'activity-activate' };
                 const dt = new Date(log.created_at);
                 const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                 return (
                   <div key={log.id} className="monitoring-activity-item">
-                    <span className="monitoring-activity-emoji">{acaoEmoji[log.acao] || '•'}</span>
-                    <span className="monitoring-activity-text">
-                      <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
-                    </span>
-                    <span className="monitoring-activity-time">{timeStr}</span>
+                    <div className={`activity-icon-wrap ${acaoColor[log.acao] || ''}`}>
+                      <span>{acaoEmoji[log.acao] || '•'}</span>
+                    </div>
+                    <div className="monitoring-activity-body">
+                      <span className="monitoring-activity-text">
+                        <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
+                      </span>
+                      <span className="monitoring-activity-time">{timeStr}</span>
+                    </div>
                   </div>
                 );
               })}
