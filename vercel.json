@@ -1,6 +1,7 @@
 {
   "redirects": [
     { "source": "/", "has": [{ "type": "host", "value": "clt.canaldojefinho.com" }], "destination": "/jclt", "statusCode": 302 },
+    { "source": "/", "has": [{ "type": "host", "value": "canaldojefinhot.com" }], "destination": "/jtiktok", "statusCode": 302 },
     { "source": "/", "has": [{ "type": "host", "value": "whats.nhpbolsa.com" }], "destination": "/bf", "statusCode": 302 },
     { "source": "/", "has": [{ "type": "host", "value": "cp.nhpbolsa.com" }], "destination": "/cp", "statusCode": 302 },
     { "source": "/", "has": [{ "type": "host", "value": "reneg.nhpbolsa.com" }], "destination": "/renegociacao", "statusCode": 302 },
@@ -20,6 +21,8 @@
     { "source": "/clt", "destination": "/api/whats-clt" },
     { "source": "/whats-clt-jeffinho", "destination": "/api/whats-clt-jeffinho" },
     { "source": "/jclt", "destination": "/api/whats-clt-jeffinho" },
+    { "source": "/whats-tiktok-jeffinho", "destination": "/api/whats-tiktok-jeffinho" },
+    { "source": "/jtiktok", "destination": "/api/whats-tiktok-jeffinho" },
     { "source": "/disparointerno", "destination": "/api/fgts-disparointerno" },
     { "source": "/cp", "destination": "/api/bolsa-cp" },
     { "source": "/b09", "destination": "/api/bolsa-cp" },
