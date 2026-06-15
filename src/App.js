@@ -507,6 +507,7 @@ function App() {
     fgts: [
       { key: 'bc06', label: 'WhatsApp CLT (bc06)', path: '/clt', domain: 'https://clt.nhcred.com' },
       { key: 'cj3', label: 'Jeffinho CLT (cj3)', path: '/jclt', domain: 'https://clt.canaldojefinho.com' },
+      { key: 'cj2', label: 'Jeffinho TikTok (cj2)', path: '/jtiktok', domain: 'https://canaldojefinhot.com' },
       { key: 'di1', label: 'Disparo Interno FGTS (di1)', path: '/disparointerno', domain: 'https://disparo.nhpfgts.com' },
     ],
     'bolsa-familia': [
@@ -536,6 +537,7 @@ function App() {
     bolsa: [
       { key: 'cj1', label: 'Randomizador Jeffinho', tipo: 'Principal', codigo: 'cj1', path: '/bolsa' },
       { key: 'cj3', label: 'Jeffinho CLT', tipo: 'Canal do Jefinho', codigo: 'cj3', path: '', domain: 'https://clt.canaldojefinho.com' },
+      { key: 'cj2', label: 'Jeffinho TikTok', tipo: 'Canal do Jefinho', codigo: 'cj2', path: '', domain: 'https://canaldojefinhot.com' },
     ],
     'bolsa-familia': [
       { key: 'bf1', label: 'Bolsa Familia principal', tipo: 'Principal', codigo: 'bf1', path: '/bolsa-familia' },
