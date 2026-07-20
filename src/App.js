@@ -533,7 +533,7 @@ function App() {
       { key: 'b05', label: 'FGTS principal', tipo: 'Principal', codigo: 'b05', path: '/fgts' },
       { key: 'di1', label: 'Disparo interno FGTS', tipo: 'Interno', codigo: 'di1', path: '', domain: 'https://disparo.nhpfgts.com' },
       { key: 'bc06', label: 'WhatsApp CLT', tipo: 'WhatsApp', codigo: 'bc06', path: '/clt', domain: 'https://clt.nhcred.com' },
-      { key: 'f02', label: 'FGTS F02', tipo: 'WhatsApp', codigo: 'f02', path: '/f02' },
+      { key: 'f02', label: 'WhatsApp FGTS F02 Janela 24H', tipo: 'WhatsApp', codigo: 'f02', path: '/f02' },
       { key: 'b01', label: 'Disparo Sergio (b01)', tipo: 'Disparo Sergio', codigo: 'b01', path: '/b01' },
       { key: 'sf1', label: 'SMS FGTS', tipo: 'SMS', codigo: 'sf1', path: '/sms-fgts', domain: 'https://sms.nhpfgts.com' },
       { key: 'sc1', label: 'SMS CLT', tipo: 'SMS', codigo: 'sc1', path: '/sms-clt', domain: 'https://sms.nhpfgts.com' },
