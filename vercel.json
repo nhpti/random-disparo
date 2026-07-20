@@ -30,6 +30,8 @@
     { "source": "/refin", "destination": "/api/whats-refin" },
     { "source": "/b10", "destination": "/api/whats-refin" },
     { "source": "/b02", "destination": "/api/whats-bolsa-familia-b02" },
+    { "source": "/b03", "destination": "/api/whats-bolsa-familia-b03" },
+    { "source": "/b01", "destination": "/api/fgts-b01" },
     { "source": "/f02", "destination": "/api/fgts-f02" }
   ]
 }

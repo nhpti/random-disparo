@@ -96,8 +96,8 @@ function formatarNumero(num) {
 const CopyIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 );
 
@@ -533,6 +533,8 @@ function App() {
       { key: 'b05', label: 'FGTS principal', tipo: 'Principal', codigo: 'b05', path: '/fgts' },
       { key: 'di1', label: 'Disparo interno FGTS', tipo: 'Interno', codigo: 'di1', path: '', domain: 'https://disparo.nhpfgts.com' },
       { key: 'bc06', label: 'WhatsApp CLT', tipo: 'WhatsApp', codigo: 'bc06', path: '/clt', domain: 'https://clt.nhcred.com' },
+      { key: 'f02', label: 'FGTS F02', tipo: 'WhatsApp', codigo: 'f02', path: '/f02' },
+      { key: 'b01', label: 'Disparo Sergio (b01)', tipo: 'Disparo Sergio', codigo: 'b01', path: '/b01' },
       { key: 'sf1', label: 'SMS FGTS', tipo: 'SMS', codigo: 'sf1', path: '/sms-fgts', domain: 'https://sms.nhpfgts.com' },
       { key: 'sc1', label: 'SMS CLT', tipo: 'SMS', codigo: 'sc1', path: '/sms-clt', domain: 'https://sms.nhpfgts.com' },
     ],
@@ -546,6 +548,8 @@ function App() {
       { key: 'b07', label: 'WhatsApp Bolsa Familia', tipo: 'WhatsApp', codigo: 'b07', path: '', domain: 'https://whats.nhpbolsa.com' },
       { key: 'b09', label: 'WhatsApp Bolsa CP', tipo: 'WhatsApp', codigo: 'b09', path: '', domain: 'https://cp.nhpbolsa.com' },
       { key: 'b10', label: 'WhatsApp Refinanciamento', tipo: 'WhatsApp', codigo: 'b10', path: '', domain: 'https://refin.nhpbolsa.com' },
+      { key: 'b02', label: 'WhatsApp Bolsa B02 Janela 24H', tipo: 'WhatsApp', codigo: 'b02', path: '/b02' },
+      { key: 'b03', label: 'Disparo Sergio (b03)', tipo: 'Disparo Sergio', codigo: 'b03', path: '/b03' },
       { key: 'sb1', label: 'SMS Bolsa', tipo: 'SMS', codigo: 'sb1', path: '/sms-bolsa', domain: 'https://sms.nhpbolsa.com' },
     ],
     renegociacao: [
@@ -680,60 +684,60 @@ function App() {
             title={darkMode ? 'Modo claro' : 'Modo escuro'}>
             {darkMode ? '☀️' : '🌙'}
           </button>
-            <span className="user-email">👤 {session.user.email}</span>
+          <span className="user-email">👤 {session.user.email}</span>
           <button className="btn-logout" onClick={handleLogout}>Sair</button>
         </div>
         <h1>Random Disparo</h1>
         <p className="subtitle">Selecione o produto para gerenciar</p>
-      {/* Botão Gerenciar Usuários (admin) */}
-      {isAdmin && (
-        <button className="btn-manage-users" onClick={() => setShowUsuarios(!showUsuarios)}>
-          👥 Gerenciar Usuários
-        </button>
-      )}
+        {/* Botão Gerenciar Usuários (admin) */}
+        {isAdmin && (
+          <button className="btn-manage-users" onClick={() => setShowUsuarios(!showUsuarios)}>
+            👥 Gerenciar Usuários
+          </button>
+        )}
 
-      {/* Painel de Usuários */}
-      {showUsuarios && isAdmin && (
-        <div className="usuarios-card">
-          <div className="card-header">
-            <h2>👥 Usuários</h2>
-            <button className="btn-close-usuarios" onClick={() => setShowUsuarios(false)}>✕</button>
-          </div>
+        {/* Painel de Usuários */}
+        {showUsuarios && isAdmin && (
+          <div className="usuarios-card">
+            <div className="card-header">
+              <h2>👥 Usuários</h2>
+              <button className="btn-close-usuarios" onClick={() => setShowUsuarios(false)}>✕</button>
+            </div>
 
-          <div className="usuario-add-form">
-            <input type="email" placeholder="Email" value={novoUsuarioEmail}
-              onChange={(e) => setNovoUsuarioEmail(e.target.value)} />
-            <input type="text" placeholder="Senha (opcional)" value={novoUsuarioSenha}
-              onChange={(e) => setNovoUsuarioSenha(e.target.value)} />
-            <select value={novoUsuarioRole} onChange={(e) => setNovoUsuarioRole(e.target.value)}>
-              <option value="admin">Admin</option>
-              <option value="operador">Operador</option>
-              <option value="viewer">Viewer</option>
-            </select>
-            <button className="btn-add" onClick={handleAddUsuario}>+ Adicionar</button>
-          </div>
+            <div className="usuario-add-form">
+              <input type="email" placeholder="Email" value={novoUsuarioEmail}
+                onChange={(e) => setNovoUsuarioEmail(e.target.value)} />
+              <input type="text" placeholder="Senha (opcional)" value={novoUsuarioSenha}
+                onChange={(e) => setNovoUsuarioSenha(e.target.value)} />
+              <select value={novoUsuarioRole} onChange={(e) => setNovoUsuarioRole(e.target.value)}>
+                <option value="admin">Admin</option>
+                <option value="operador">Operador</option>
+                <option value="viewer">Viewer</option>
+              </select>
+              <button className="btn-add" onClick={handleAddUsuario}>+ Adicionar</button>
+            </div>
 
-          <div className="usuarios-list">
-            {usuarios.map((u) => (
-              <div key={u.id} className="usuario-item">
-                <div className="usuario-info">
-                  <span className="usuario-email">{u.email}</span>
-                  <span className={`usuario-role role-${u.role}`}>{u.role}</span>
+            <div className="usuarios-list">
+              {usuarios.map((u) => (
+                <div key={u.id} className="usuario-item">
+                  <div className="usuario-info">
+                    <span className="usuario-email">{u.email}</span>
+                    <span className={`usuario-role role-${u.role}`}>{u.role}</span>
+                  </div>
+                  <div className="usuario-actions">
+                    <select value={u.role} onChange={(e) => handleChangeRole(u.id, e.target.value)}>
+                      <option value="admin">Admin</option>
+                      <option value="operador">Operador</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                    <button className="btn-remove-usuario" onClick={() => handleDeleteUsuario(u.id)}
+                      title="Remover usuário">&times;</button>
+                  </div>
                 </div>
-                <div className="usuario-actions">
-                  <select value={u.role} onChange={(e) => handleChangeRole(u.id, e.target.value)}>
-                    <option value="admin">Admin</option>
-                    <option value="operador">Operador</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                  <button className="btn-remove-usuario" onClick={() => handleDeleteUsuario(u.id)}
-                    title="Remover usuário">&times;</button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
         <div className="product-selector">
           {Object.entries(PRODUTOS).map(([key, p]) => {
             const ds = dashboardStats[key];
@@ -786,565 +790,565 @@ function App() {
 
   return (
     <div className={`page-wrapper ${logOpen ? 'log-open' : ''}`}>
-    {/* Side Panel - Log de Atividades */}
-    <div className={`log-sidebar ${logOpen ? 'open' : ''}`}>
-      <div className="log-sidebar-header">
-        <h3>📋 Log de Atividades</h3>
-        <button className="log-sidebar-close" onClick={() => setLogOpen(false)}>✕</button>
-      </div>
-      {activityLog.length === 0 ? (
-        <p className="log-empty">Nenhuma atividade registrada.</p>
-      ) : (
-        <div className="activity-list">
-          {activityLog.map((log) => {
-            const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
-            const acaoClass = { adicionou: 'acao-add', removeu: 'acao-remove', pausou: 'acao-pause', ativou: 'acao-activate' };
-            const dt = new Date(log.created_at);
-            const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-            return (
-              <div key={log.id} className={`activity-item ${acaoClass[log.acao] || ''}`}>
-                <span className="activity-emoji">{acaoEmoji[log.acao] || '•'}</span>
-                <div className="activity-info">
-                  <span className="activity-text">
-                    <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
-                  </span>
-                  <span className="activity-time">{timeStr}</span>
-                </div>
-              </div>
-            );
-          })}
+      {/* Side Panel - Log de Atividades */}
+      <div className={`log-sidebar ${logOpen ? 'open' : ''}`}>
+        <div className="log-sidebar-header">
+          <h3>📋 Log de Atividades</h3>
+          <button className="log-sidebar-close" onClick={() => setLogOpen(false)}>✕</button>
         </div>
-      )}
-    </div>
-
-    <div className="page">
-      {/* Botão toggle log */}
-      <button className="btn-log-toggle" onClick={() => setLogOpen(!logOpen)} title="Log de Atividades">
-        📋
-      </button>
-      {/* Toast */}
-      {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          <span>{toast.type === 'success' ? '✓' : '✕'}</span> {toast.message}
-        </div>
-      )}
-
-      {/* Confirm Delete Modal */}
-      {confirmDelete && (
-        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Remover número?</h3>
-            <p>Tem certeza que deseja remover o número <strong>{formatarNumero(confirmDelete.numero)}</strong>?</p>
-            <div className="modal-buttons">
-              <button className="btn-cancel" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="btn-confirm-delete" onClick={() => handleDelete(confirmDelete.id, confirmDelete.numero)}>Remover</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="top-bar">
-        <button className="btn-voltar" onClick={handleVoltar}>← Produtos</button>
-        <button className="btn-theme" onClick={() => setDarkMode(!darkMode)}
-          title={darkMode ? 'Modo claro' : 'Modo escuro'}>
-          {darkMode ? '☀️' : '🌙'}
-        </button>
-        <span className="user-email">👤 {session.user.email} {userRole && <span className={`role-badge role-${userRole}`}>{userRole}</span>}</span>
-        <button className="btn-logout" onClick={handleLogout}>Sair</button>
-      </div>
-      <h1>{config.emoji} {config.nome}</h1>
-      <p className="subtitle">{config.desc}</p>
-      {lastUpdated && (
-        <span className="polling-indicator" title={`Última atualização: ${lastUpdated.toLocaleTimeString('pt-BR')}`}>
-          🟢 Atualizado {agoText}
-        </span>
-      )}
-
-      {/* Abas: Painel / Monitoramento (#7) */}
-      <div className="tab-bar">
-        <button className={`tab-btn ${activeTab === 'painel' ? 'tab-active' : ''}`} onClick={() => setActiveTab('painel')}>
-          📊 Painel
-        </button>
-        <button className={`tab-btn ${activeTab === 'links' ? 'tab-active' : ''}`} onClick={() => setActiveTab('links')}>
-          Links
-        </button>
-        <button className={`tab-btn ${activeTab === 'monitoramento' ? 'tab-active' : ''}`} onClick={() => setActiveTab('monitoramento')}>
-          🔍 Monitoramento
-          {healthAlerts && !healthAlerts.ok && <span className="tab-badge">!</span>}
-        </button>
-      </div>
-
-      {/* Notificação de alertas (#5) */}
-      {activeTab === 'painel' && healthAlerts && !healthAlerts.ok && !healthDismissed && (
-        <div className="health-banner health-banner-danger">
-          <div className="health-banner-content">
-            <span className="health-banner-icon">🚨</span>
-            <div className="health-banner-text">
-              <strong>{healthAlerts.problemas.length} problema{healthAlerts.problemas.length > 1 ? 's' : ''} detectado{healthAlerts.problemas.length > 1 ? 's' : ''}</strong>
-              <span className="health-banner-detail">
-                {healthAlerts.problemas.slice(0, 2).map(p => p.mensagem).join(' · ')}
-              </span>
-            </div>
-            <button className="health-banner-action" onClick={() => setActiveTab('monitoramento')}>Ver detalhes →</button>
-            <button className="health-banner-dismiss" onClick={() => setHealthDismissed(true)}>✕</button>
-          </div>
-        </div>
-      )}
-      {activeTab === 'painel' && healthAlerts && healthAlerts.ok && healthAlerts.avisos?.length > 0 && !healthDismissed && (
-        <div className="health-banner health-banner-warn">
-          <div className="health-banner-content">
-            <span className="health-banner-icon">💡</span>
-            <div className="health-banner-text">
-              <strong>{healthAlerts.avisos.length} aviso{healthAlerts.avisos.length > 1 ? 's' : ''}</strong>
-              <span className="health-banner-detail">
-                {healthAlerts.avisos.slice(0, 2).map(a => a.mensagem).join(' · ')}
-              </span>
-            </div>
-            <button className="health-banner-action" onClick={() => setActiveTab('monitoramento')}>Ver →</button>
-            <button className="health-banner-dismiss" onClick={() => setHealthDismissed(true)}>✕</button>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ ABA PAINEL ═══ */}
-      {activeTab === 'painel' && (
-      <>
-      {/* Estatísticas */}
-      <div className="redirect-section">
-        <div className="stats-row">
-          <div className="stat-card">
-            <span className="stat-value">{stats?.totalRedirects ?? '—'}</span>
-            <span className="stat-label">Redirects total</span>
-          </div>
-          <div className="stat-card stat-card-highlight">
-            <span className="stat-value">{stats?.redirectsHoje ?? '—'}</span>
-            <span className="stat-label">Cliques período</span>
-            {/* Comparativo (#3) — usa historico se disponível */}
-            {(() => {
-              if (!stats?.historico || stats.historico.length < 2) return null;
-              const hojeH = stats.historico.find(h => h.isHoje);
-              const ontemH = stats.historico[stats.historico.length - 2];
-              if (!hojeH || !ontemH || ontemH.cliques === 0) return null;
-              const cmp = getComparativo(hojeH.cliques, ontemH.cliques);
-              if (!cmp) return null;
+        {activityLog.length === 0 ? (
+          <p className="log-empty">Nenhuma atividade registrada.</p>
+        ) : (
+          <div className="activity-list">
+            {activityLog.map((log) => {
+              const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
+              const acaoClass = { adicionou: 'acao-add', removeu: 'acao-remove', pausou: 'acao-pause', ativou: 'acao-activate' };
+              const dt = new Date(log.created_at);
+              const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
               return (
-                <span className={`stat-compare ${cmp.up ? 'compare-up' : 'compare-down'}`}>
-                  {cmp.up ? '↑' : '↓'} {Math.abs(cmp.diff)}% vs {ontemH.dia}
-                </span>
-              );
-            })()}
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">{stats?.uniqueHoje ?? '—'}</span>
-            <span className="stat-label">IPs únicos período</span>
-            {(() => {
-              if (!stats?.historico || stats.historico.length < 2) return null;
-              const hojeH = stats.historico.find(h => h.isHoje);
-              const ontemH = stats.historico[stats.historico.length - 2];
-              if (!hojeH || !ontemH || ontemH.uniqueIps === 0) return null;
-              const cmp = getComparativo(hojeH.uniqueIps, ontemH.uniqueIps);
-              if (!cmp) return null;
-              return (
-                <span className={`stat-compare ${cmp.up ? 'compare-up' : 'compare-down'}`}>
-                  {cmp.up ? '↑' : '↓'} {Math.abs(cmp.diff)}% vs {ontemH.dia}
-                </span>
-              );
-            })()}
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">{numerosAtivos}</span>
-            <span className="stat-label">Números ativos</span>
-          </div>
-        </div>
-
-        {/* Filtro por Período */}
-        <div className="filtro-periodo">
-          <span className="filtro-label">📅 Período:</span>
-          <input type="date" value={filtroInicio} onChange={(e) => setFiltroInicio(e.target.value)} max={filtroFim} />
-          <span className="filtro-sep">até</span>
-          <input type="date" value={filtroFim} onChange={(e) => setFiltroFim(e.target.value)} min={filtroInicio} max={hoje} />
-          <button className="btn-filtro-hoje" onClick={() => { setFiltroInicio(hoje); setFiltroFim(hoje); }}>Hoje</button>
-          <button className="btn-filtro-7d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 6); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>7 dias</button>
-          <button className="btn-filtro-30d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 29); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>30 dias</button>
-          <button className="btn-export-csv" onClick={exportCSV} title="Exportar dados como CSV">⬇ Exportar CSV</button>
-        </div>
-
-        {/* Histórico do período */}
-        {stats?.historico && stats.historico.length > 0 && (
-          <div className="historico-section">
-            <h3 className="historico-title">📊 Histórico do Período</h3>
-            <div className="historico-legenda">
-              <span className="legenda-item"><span className="legenda-cor legenda-cliques"></span>Cliques</span>
-              <span className="legenda-item"><span className="legenda-cor legenda-ips"></span>IPs únicos</span>
-            </div>
-            <div className="historico-chart">
-              {stats.historico.map((h, i) => {
-                const maxHist = Math.max(...stats.historico.map(x => x.cliques), 1);
-                const barCliques = (h.cliques / maxHist) * 100;
-                const barIps = (h.uniqueIps / maxHist) * 100;
-                const isHoje = h.isHoje;
-                return (
-                  <div key={h.data} className={`historico-bar-col ${isHoje ? 'historico-hoje' : ''}`}>
-                    <div className="historico-valores">
-                      <span className="historico-valor">{h.cliques}</span>
-                      <span className="historico-valor historico-valor-ip">{h.uniqueIps}</span>
-                    </div>
-                    <div className="historico-bars-duo">
-                      <div className="historico-bar-bg">
-                        <div className="historico-bar-fill" style={{ height: `${barCliques}%` }}></div>
-                      </div>
-                      <div className="historico-bar-bg historico-bar-bg-ip">
-                        <div className="historico-bar-fill-ip" style={{ height: `${barIps}%` }}></div>
-                      </div>
-                    </div>
-                    <span className="historico-dia">{isHoje ? 'Hoje' : h.dia}</span>
+                <div key={log.id} className={`activity-item ${acaoClass[log.acao] || ''}`}>
+                  <span className="activity-emoji">{acaoEmoji[log.acao] || '•'}</span>
+                  <div className="activity-info">
+                    <span className="activity-text">
+                      <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
+                    </span>
+                    <span className="activity-time">{timeStr}</span>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Números Ativos */}
-      <div className="numbers-card">
-        <div className="card-header">
-          <h2>Números</h2>
-          <span className="counter">{numerosAtivos} / {numeros.length}</span>
-        </div>
-
-        {/* Busca/Filtro de números (#4) */}
-        {numeros.length > 5 && (
-          <div className="search-numeros">
-            <span className="search-icon">🔍</span>
-            <input
-              type="text"
-              placeholder="Buscar número..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            {searchTerm && (
-              <button className="search-clear" onClick={() => setSearchTerm('')}>✕</button>
-            )}
-            {searchTerm && (
-              <span className="search-count">{numerosFiltrados.length} de {numeros.length}</span>
-            )}
+      <div className="page">
+        {/* Botão toggle log */}
+        <button className="btn-log-toggle" onClick={() => setLogOpen(!logOpen)} title="Log de Atividades">
+          📋
+        </button>
+        {/* Toast */}
+        {toast && (
+          <div className={`toast toast-${toast.type}`}>
+            <span>{toast.type === 'success' ? '✓' : '✕'}</span> {toast.message}
           </div>
         )}
 
-        {/* Alerta: números sem cliques (só mostra se outros números têm tráfego significativo) */}
-        {(() => {
-          const ativos = numeros.filter(n => n.ativo !== false);
-          const comCliques = ativos.filter(n => getNumeroStats(n.numero).total > 0);
-          const semCliques = ativos.filter(n => getNumeroStats(n.numero).total === 0);
-          if (semCliques.length === 0) return null;
-          // Calcula mediana de cliques dos números que têm tráfego
-          const cliquesOrdenados = comCliques.map(n => getNumeroStats(n.numero).total).sort((a, b) => a - b);
-          const mediana = cliquesOrdenados.length > 0
-            ? (cliquesOrdenados.length % 2 === 0
-              ? (cliquesOrdenados[cliquesOrdenados.length / 2 - 1] + cliquesOrdenados[cliquesOrdenados.length / 2]) / 2
-              : cliquesOrdenados[Math.floor(cliquesOrdenados.length / 2)])
-            : 0;
-          // Só mostra alerta se há tráfego significativo nos outros números
-          if (mediana < 5) return null;
-          return (
-            <div className="alerta-sem-cliques">
-              <span className="alerta-icon">⚠️</span>
-              <span>{semCliques.length} número{semCliques.length > 1 ? 's' : ''} ativo{semCliques.length > 1 ? 's' : ''} sem cliques no período</span>
-            </div>
-          );
-        })()}
-
-        {canEdit && (
-        <div className="input-area">
-          <input ref={inputRef} type="text" placeholder="Ex: 48999998888"
-            value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} />
-          <button className="btn-add" onClick={handleAdd}>+ Adicionar</button>
-        </div>
-        )}
-
-        <div className="numbers-list">
-          {numerosFiltrados.length === 0 && !searchTerm && (
-            <div className="empty-msg">Nenhum número cadastrado. Adicione acima.</div>
-          )}
-          {numerosFiltrados.length === 0 && searchTerm && (
-            <div className="empty-msg">Nenhum número encontrado para "{searchTerm}"</div>
-          )}
-          {numerosFiltrados.map((n, idx) => {
-            const st = getNumeroStats(n.numero);
-            const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
-            const isAtivo = n.ativo !== false;
-            const semClique = isAtivo && st.total === 0;
-            // Só marca como warning se há tráfego significativo nos outros números
-            const ativosComCliques = numeros.filter(x => x.ativo !== false && getNumeroStats(x.numero).total > 0);
-            const cliquesOrd = ativosComCliques.map(x => getNumeroStats(x.numero).total).sort((a, b) => a - b);
-            const med = cliquesOrd.length > 0
-              ? (cliquesOrd.length % 2 === 0
-                ? (cliquesOrd[cliquesOrd.length / 2 - 1] + cliquesOrd[cliquesOrd.length / 2]) / 2
-                : cliquesOrd[Math.floor(cliquesOrd.length / 2)])
-              : 0;
-            const mostrarWarn = semClique && med >= 5;
-            return (
-              <div key={n.id} className={`number-item ${!isAtivo ? 'number-item-paused' : ''} ${mostrarWarn ? 'number-item-warn' : ''}`}>
-                <span className="num-index">{idx + 1}.</span>
-                <div className="num-info">
-                  <div className="num-top-row">
-                    <span className="num-value">{formatarNumero(n.numero)}</span>
-                    <button className="btn-copy-num" onClick={() => handleCopyNumero(n.numero)}
-                      title="Copiar número">
-                      {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
-                    </button>
-                    <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
-                    {mostrarWarn && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
-                    {canEdit && (
-                    <button
-                      className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'} ${pendingToggleIds.has(n.id) ? 'btn-toggle-pending' : ''}`}
-                      onClick={() => handleToggle(n.id, n.numero, isAtivo)}
-                      disabled={pendingToggleIds.has(n.id)}
-                      title={isAtivo ? 'Pausar número' : 'Ativar número'}>
-                      <span className="toggle-track" aria-hidden="true">
-                        <span className="toggle-dot"></span>
-                      </span>
-                      <span className="toggle-label">{isAtivo ? 'Ativo' : 'Pausado'}</span>
-                    </button>
-                    )}
-                    {canEdit && (
-                    <button className="btn-remove"
-                      onClick={() => setConfirmDelete({ id: n.id, numero: n.numero })}
-                      title="Remover número">&times;</button>
-                    )}
-                  </div>
-                  <div className="num-bar-bg">
-                    <div className="num-bar-fill" style={{ width: `${percent}%` }}></div>
-                  </div>
-                </div>
+        {/* Confirm Delete Modal */}
+        {confirmDelete && (
+          <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <h3>Remover número?</h3>
+              <p>Tem certeza que deseja remover o número <strong>{formatarNumero(confirmDelete.numero)}</strong>?</p>
+              <div className="modal-buttons">
+                <button className="btn-cancel" onClick={() => setConfirmDelete(null)}>Cancelar</button>
+                <button className="btn-confirm-delete" onClick={() => handleDelete(confirmDelete.id, confirmDelete.numero)}>Remover</button>
               </div>
-            );
-          })}
-        </div>
-      </div>
-      </>
-      )}
-
-      {/* ABA LINKS */}
-      {activeTab === 'links' && (
-      <div className="links-panel">
-        <div className="links-panel-header">
-          <div>
-            <h2>Links de Randomizacao</h2>
-            <p>Todos os links criados para disparos, agrupados por produto.</p>
-          </div>
-          <span className="links-count">{linksProdutoAtual.length} links</span>
-        </div>
-
-        {linksProdutoAtual.length > 0 && (
-          <div className="links-current">
-            <h3>Produto atual</h3>
-            <div className="links-grid">
-              {linksProdutoAtual.map((link) => {
-                const url = getLinkUrl(link);
-                const copyKey = `${produto}-${link.key}`;
-                return (
-                  <div className="link-card" key={copyKey}>
-                    <div className="link-card-top">
-                      <span className="link-type">{link.tipo}</span>
-                      <span className="link-code">{link.codigo}</span>
-                    </div>
-                    <strong>{link.label}</strong>
-                    <span className="link-url">{url}</span>
-                    <button className="btn-copy-main" onClick={() => handleCopySmsLink(copyKey, url)}>
-                      {copiedSms === copyKey ? 'Copiado!' : <><CopyIcon size={14} /> Copiar</>}
-                    </button>
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}
 
+        <div className="top-bar">
+          <button className="btn-voltar" onClick={handleVoltar}>← Produtos</button>
+          <button className="btn-theme" onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? 'Modo claro' : 'Modo escuro'}>
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+          <span className="user-email">👤 {session.user.email} {userRole && <span className={`role-badge role-${userRole}`}>{userRole}</span>}</span>
+          <button className="btn-logout" onClick={handleLogout}>Sair</button>
+        </div>
+        <h1>{config.emoji} {config.nome}</h1>
+        <p className="subtitle">{config.desc}</p>
+        {lastUpdated && (
+          <span className="polling-indicator" title={`Última atualização: ${lastUpdated.toLocaleTimeString('pt-BR')}`}>
+            🟢 Atualizado {agoText}
+          </span>
+        )}
 
-      </div>
-      )}
-
-      {/* ═══ ABA MONITORAMENTO (#7) ═══ */}
-      {activeTab === 'monitoramento' && (
-      <div className="monitoring-section">
-
-        {/* Hero Status Banner */}
-        <div className={`monitor-hero ${healthAlerts?.ok ? 'hero-ok' : 'hero-danger'}`}>
-          <div className="monitor-hero-left">
-            <div className={`monitor-hero-pulse ${healthAlerts?.ok ? 'pulse-ok' : 'pulse-danger'}`}></div>
-            <div>
-              <div className="monitor-hero-title">{healthAlerts?.ok ? 'Todos os sistemas operacionais' : 'Problemas detectados'}</div>
-              <div className="monitor-hero-sub">Verificado às {healthAlerts?.hora_brasilia || '--:--'} · Brasília</div>
-            </div>
-          </div>
-          <div className="monitor-hero-stats">
-            <div className="monitor-hero-stat">
-              <span className="monitor-hero-stat-val">{healthAlerts?.total_cliques_hoje ?? '—'}</span>
-              <span className="monitor-hero-stat-lbl">cliques hoje</span>
-            </div>
-            <div className="monitor-hero-divider"></div>
-            <div className="monitor-hero-stat">
-              <span className="monitor-hero-stat-val">{healthAlerts?.total_cliques_1h ?? '—'}</span>
-              <span className="monitor-hero-stat-lbl">última hora</span>
-            </div>
-            <div className="monitor-hero-divider"></div>
-            <div className="monitor-hero-stat">
-              <span className="monitor-hero-stat-val">
-                {healthAlerts?.numeros_ativos ? Object.values(healthAlerts.numeros_ativos).reduce((t, v) => t + Number(v || 0), 0) : '—'}
-              </span>
-              <span className="monitor-hero-stat-lbl">números ativos</span>
-            </div>
-          </div>
+        {/* Abas: Painel / Monitoramento (#7) */}
+        <div className="tab-bar">
+          <button className={`tab-btn ${activeTab === 'painel' ? 'tab-active' : ''}`} onClick={() => setActiveTab('painel')}>
+            📊 Painel
+          </button>
+          <button className={`tab-btn ${activeTab === 'links' ? 'tab-active' : ''}`} onClick={() => setActiveTab('links')}>
+            Links
+          </button>
+          <button className={`tab-btn ${activeTab === 'monitoramento' ? 'tab-active' : ''}`} onClick={() => setActiveTab('monitoramento')}>
+            🔍 Monitoramento
+            {healthAlerts && !healthAlerts.ok && <span className="tab-badge">!</span>}
+          </button>
         </div>
 
-        {/* Gráfico tempo real (#6) */}
-        <div className="realtime-card">
-          <div className="realtime-header">
-            <div className="realtime-header-left">
-              <span className="realtime-live-badge"><span className="live-dot"></span>AO VIVO</span>
-              <h3>Cliques em Tempo Real</h3>
+        {/* Notificação de alertas (#5) */}
+        {activeTab === 'painel' && healthAlerts && !healthAlerts.ok && !healthDismissed && (
+          <div className="health-banner health-banner-danger">
+            <div className="health-banner-content">
+              <span className="health-banner-icon">🚨</span>
+              <div className="health-banner-text">
+                <strong>{healthAlerts.problemas.length} problema{healthAlerts.problemas.length > 1 ? 's' : ''} detectado{healthAlerts.problemas.length > 1 ? 's' : ''}</strong>
+                <span className="health-banner-detail">
+                  {healthAlerts.problemas.slice(0, 2).map(p => p.mensagem).join(' · ')}
+                </span>
+              </div>
+              <button className="health-banner-action" onClick={() => setActiveTab('monitoramento')}>Ver detalhes →</button>
+              <button className="health-banner-dismiss" onClick={() => setHealthDismissed(true)}>✕</button>
             </div>
-            <span className="realtime-subtitle">Últimos 60 min · <strong>{realtimeData?.total ?? 0}</strong> cliques</span>
           </div>
-          <div className="realtime-chart-wrap">
-            {realtimeData?.minutos ? (
-              <>
-                <div className="realtime-grid-lines">
-                  <div className="grid-line"></div>
-                  <div className="grid-line"></div>
-                  <div className="grid-line"></div>
+        )}
+        {activeTab === 'painel' && healthAlerts && healthAlerts.ok && healthAlerts.avisos?.length > 0 && !healthDismissed && (
+          <div className="health-banner health-banner-warn">
+            <div className="health-banner-content">
+              <span className="health-banner-icon">💡</span>
+              <div className="health-banner-text">
+                <strong>{healthAlerts.avisos.length} aviso{healthAlerts.avisos.length > 1 ? 's' : ''}</strong>
+                <span className="health-banner-detail">
+                  {healthAlerts.avisos.slice(0, 2).map(a => a.mensagem).join(' · ')}
+                </span>
+              </div>
+              <button className="health-banner-action" onClick={() => setActiveTab('monitoramento')}>Ver →</button>
+              <button className="health-banner-dismiss" onClick={() => setHealthDismissed(true)}>✕</button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ ABA PAINEL ═══ */}
+        {activeTab === 'painel' && (
+          <>
+            {/* Estatísticas */}
+            <div className="redirect-section">
+              <div className="stats-row">
+                <div className="stat-card">
+                  <span className="stat-value">{stats?.totalRedirects ?? '—'}</span>
+                  <span className="stat-label">Redirects total</span>
                 </div>
-                <div className="realtime-chart">
-                  {realtimeData.minutos.map((val, i) => {
-                    const heightPct = realtimeData.pico > 0 ? (val / realtimeData.pico) * 100 : 0;
-                    const isRecent = i >= 55;
-                    const minutesAgo = 60 - i - 1;
-                    const label = minutesAgo === 0 ? 'agora' : `${minutesAgo} min atrás`;
+                <div className="stat-card stat-card-highlight">
+                  <span className="stat-value">{stats?.redirectsHoje ?? '—'}</span>
+                  <span className="stat-label">Cliques período</span>
+                  {/* Comparativo (#3) — usa historico se disponível */}
+                  {(() => {
+                    if (!stats?.historico || stats.historico.length < 2) return null;
+                    const hojeH = stats.historico.find(h => h.isHoje);
+                    const ontemH = stats.historico[stats.historico.length - 2];
+                    if (!hojeH || !ontemH || ontemH.cliques === 0) return null;
+                    const cmp = getComparativo(hojeH.cliques, ontemH.cliques);
+                    if (!cmp) return null;
                     return (
-                      <div
-                        key={i}
-                        className={`realtime-bar-col ${isRecent ? 'realtime-recent' : ''} ${val > 0 ? 'has-value' : ''}`}
-                        onMouseEnter={() => setHoveredBar({ i, val, label })}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      >
-                        {hoveredBar?.i === i && val > 0 && (
-                          <div className="bar-tooltip">
-                            <span className="bar-tooltip-val">{val}</span>
-                            <span className="bar-tooltip-lbl">{label}</span>
+                      <span className={`stat-compare ${cmp.up ? 'compare-up' : 'compare-down'}`}>
+                        {cmp.up ? '↑' : '↓'} {Math.abs(cmp.diff)}% vs {ontemH.dia}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <div className="stat-card">
+                  <span className="stat-value">{stats?.uniqueHoje ?? '—'}</span>
+                  <span className="stat-label">IPs únicos período</span>
+                  {(() => {
+                    if (!stats?.historico || stats.historico.length < 2) return null;
+                    const hojeH = stats.historico.find(h => h.isHoje);
+                    const ontemH = stats.historico[stats.historico.length - 2];
+                    if (!hojeH || !ontemH || ontemH.uniqueIps === 0) return null;
+                    const cmp = getComparativo(hojeH.uniqueIps, ontemH.uniqueIps);
+                    if (!cmp) return null;
+                    return (
+                      <span className={`stat-compare ${cmp.up ? 'compare-up' : 'compare-down'}`}>
+                        {cmp.up ? '↑' : '↓'} {Math.abs(cmp.diff)}% vs {ontemH.dia}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <div className="stat-card">
+                  <span className="stat-value">{numerosAtivos}</span>
+                  <span className="stat-label">Números ativos</span>
+                </div>
+              </div>
+
+              {/* Filtro por Período */}
+              <div className="filtro-periodo">
+                <span className="filtro-label">📅 Período:</span>
+                <input type="date" value={filtroInicio} onChange={(e) => setFiltroInicio(e.target.value)} max={filtroFim} />
+                <span className="filtro-sep">até</span>
+                <input type="date" value={filtroFim} onChange={(e) => setFiltroFim(e.target.value)} min={filtroInicio} max={hoje} />
+                <button className="btn-filtro-hoje" onClick={() => { setFiltroInicio(hoje); setFiltroFim(hoje); }}>Hoje</button>
+                <button className="btn-filtro-7d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 6); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>7 dias</button>
+                <button className="btn-filtro-30d" onClick={() => { const d = new Date(); d.setDate(d.getDate() - 29); setFiltroInicio(d.toISOString().split('T')[0]); setFiltroFim(hoje); }}>30 dias</button>
+                <button className="btn-export-csv" onClick={exportCSV} title="Exportar dados como CSV">⬇ Exportar CSV</button>
+              </div>
+
+              {/* Histórico do período */}
+              {stats?.historico && stats.historico.length > 0 && (
+                <div className="historico-section">
+                  <h3 className="historico-title">📊 Histórico do Período</h3>
+                  <div className="historico-legenda">
+                    <span className="legenda-item"><span className="legenda-cor legenda-cliques"></span>Cliques</span>
+                    <span className="legenda-item"><span className="legenda-cor legenda-ips"></span>IPs únicos</span>
+                  </div>
+                  <div className="historico-chart">
+                    {stats.historico.map((h, i) => {
+                      const maxHist = Math.max(...stats.historico.map(x => x.cliques), 1);
+                      const barCliques = (h.cliques / maxHist) * 100;
+                      const barIps = (h.uniqueIps / maxHist) * 100;
+                      const isHoje = h.isHoje;
+                      return (
+                        <div key={h.data} className={`historico-bar-col ${isHoje ? 'historico-hoje' : ''}`}>
+                          <div className="historico-valores">
+                            <span className="historico-valor">{h.cliques}</span>
+                            <span className="historico-valor historico-valor-ip">{h.uniqueIps}</span>
                           </div>
-                        )}
-                        <div className="realtime-bar-bg">
+                          <div className="historico-bars-duo">
+                            <div className="historico-bar-bg">
+                              <div className="historico-bar-fill" style={{ height: `${barCliques}%` }}></div>
+                            </div>
+                            <div className="historico-bar-bg historico-bar-bg-ip">
+                              <div className="historico-bar-fill-ip" style={{ height: `${barIps}%` }}></div>
+                            </div>
+                          </div>
+                          <span className="historico-dia">{isHoje ? 'Hoje' : h.dia}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Números Ativos */}
+            <div className="numbers-card">
+              <div className="card-header">
+                <h2>Números</h2>
+                <span className="counter">{numerosAtivos} / {numeros.length}</span>
+              </div>
+
+              {/* Busca/Filtro de números (#4) */}
+              {numeros.length > 5 && (
+                <div className="search-numeros">
+                  <span className="search-icon">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Buscar número..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input"
+                  />
+                  {searchTerm && (
+                    <button className="search-clear" onClick={() => setSearchTerm('')}>✕</button>
+                  )}
+                  {searchTerm && (
+                    <span className="search-count">{numerosFiltrados.length} de {numeros.length}</span>
+                  )}
+                </div>
+              )}
+
+              {/* Alerta: números sem cliques (só mostra se outros números têm tráfego significativo) */}
+              {(() => {
+                const ativos = numeros.filter(n => n.ativo !== false);
+                const comCliques = ativos.filter(n => getNumeroStats(n.numero).total > 0);
+                const semCliques = ativos.filter(n => getNumeroStats(n.numero).total === 0);
+                if (semCliques.length === 0) return null;
+                // Calcula mediana de cliques dos números que têm tráfego
+                const cliquesOrdenados = comCliques.map(n => getNumeroStats(n.numero).total).sort((a, b) => a - b);
+                const mediana = cliquesOrdenados.length > 0
+                  ? (cliquesOrdenados.length % 2 === 0
+                    ? (cliquesOrdenados[cliquesOrdenados.length / 2 - 1] + cliquesOrdenados[cliquesOrdenados.length / 2]) / 2
+                    : cliquesOrdenados[Math.floor(cliquesOrdenados.length / 2)])
+                  : 0;
+                // Só mostra alerta se há tráfego significativo nos outros números
+                if (mediana < 5) return null;
+                return (
+                  <div className="alerta-sem-cliques">
+                    <span className="alerta-icon">⚠️</span>
+                    <span>{semCliques.length} número{semCliques.length > 1 ? 's' : ''} ativo{semCliques.length > 1 ? 's' : ''} sem cliques no período</span>
+                  </div>
+                );
+              })()}
+
+              {canEdit && (
+                <div className="input-area">
+                  <input ref={inputRef} type="text" placeholder="Ex: 48999998888"
+                    value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} />
+                  <button className="btn-add" onClick={handleAdd}>+ Adicionar</button>
+                </div>
+              )}
+
+              <div className="numbers-list">
+                {numerosFiltrados.length === 0 && !searchTerm && (
+                  <div className="empty-msg">Nenhum número cadastrado. Adicione acima.</div>
+                )}
+                {numerosFiltrados.length === 0 && searchTerm && (
+                  <div className="empty-msg">Nenhum número encontrado para "{searchTerm}"</div>
+                )}
+                {numerosFiltrados.map((n, idx) => {
+                  const st = getNumeroStats(n.numero);
+                  const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
+                  const isAtivo = n.ativo !== false;
+                  const semClique = isAtivo && st.total === 0;
+                  // Só marca como warning se há tráfego significativo nos outros números
+                  const ativosComCliques = numeros.filter(x => x.ativo !== false && getNumeroStats(x.numero).total > 0);
+                  const cliquesOrd = ativosComCliques.map(x => getNumeroStats(x.numero).total).sort((a, b) => a - b);
+                  const med = cliquesOrd.length > 0
+                    ? (cliquesOrd.length % 2 === 0
+                      ? (cliquesOrd[cliquesOrd.length / 2 - 1] + cliquesOrd[cliquesOrd.length / 2]) / 2
+                      : cliquesOrd[Math.floor(cliquesOrd.length / 2)])
+                    : 0;
+                  const mostrarWarn = semClique && med >= 5;
+                  return (
+                    <div key={n.id} className={`number-item ${!isAtivo ? 'number-item-paused' : ''} ${mostrarWarn ? 'number-item-warn' : ''}`}>
+                      <span className="num-index">{idx + 1}.</span>
+                      <div className="num-info">
+                        <div className="num-top-row">
+                          <span className="num-value">{formatarNumero(n.numero)}</span>
+                          <button className="btn-copy-num" onClick={() => handleCopyNumero(n.numero)}
+                            title="Copiar número">
+                            {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
+                          </button>
+                          <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
+                          {mostrarWarn && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
+                          {canEdit && (
+                            <button
+                              className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'} ${pendingToggleIds.has(n.id) ? 'btn-toggle-pending' : ''}`}
+                              onClick={() => handleToggle(n.id, n.numero, isAtivo)}
+                              disabled={pendingToggleIds.has(n.id)}
+                              title={isAtivo ? 'Pausar número' : 'Ativar número'}>
+                              <span className="toggle-track" aria-hidden="true">
+                                <span className="toggle-dot"></span>
+                              </span>
+                              <span className="toggle-label">{isAtivo ? 'Ativo' : 'Pausado'}</span>
+                            </button>
+                          )}
+                          {canEdit && (
+                            <button className="btn-remove"
+                              onClick={() => setConfirmDelete({ id: n.id, numero: n.numero })}
+                              title="Remover número">&times;</button>
+                          )}
+                        </div>
+                        <div className="num-bar-bg">
+                          <div className="num-bar-fill" style={{ width: `${percent}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ABA LINKS */}
+        {activeTab === 'links' && (
+          <div className="links-panel">
+            <div className="links-panel-header">
+              <div>
+                <h2>Links de Randomizacao</h2>
+                <p>Todos os links criados para disparos, agrupados por produto.</p>
+              </div>
+              <span className="links-count">{linksProdutoAtual.length} links</span>
+            </div>
+
+            {linksProdutoAtual.length > 0 && (
+              <div className="links-current">
+                <h3>Produto atual</h3>
+                <div className="links-grid">
+                  {linksProdutoAtual.map((link) => {
+                    const url = getLinkUrl(link);
+                    const copyKey = `${produto}-${link.key}`;
+                    return (
+                      <div className="link-card" key={copyKey}>
+                        <div className="link-card-top">
+                          <span className="link-type">{link.tipo}</span>
+                          <span className="link-code">{link.codigo}</span>
+                        </div>
+                        <strong>{link.label}</strong>
+                        <span className="link-url">{url}</span>
+                        <button className="btn-copy-main" onClick={() => handleCopySmsLink(copyKey, url)}>
+                          {copiedSms === copyKey ? 'Copiado!' : <><CopyIcon size={14} /> Copiar</>}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+
+          </div>
+        )}
+
+        {/* ═══ ABA MONITORAMENTO (#7) ═══ */}
+        {activeTab === 'monitoramento' && (
+          <div className="monitoring-section">
+
+            {/* Hero Status Banner */}
+            <div className={`monitor-hero ${healthAlerts?.ok ? 'hero-ok' : 'hero-danger'}`}>
+              <div className="monitor-hero-left">
+                <div className={`monitor-hero-pulse ${healthAlerts?.ok ? 'pulse-ok' : 'pulse-danger'}`}></div>
+                <div>
+                  <div className="monitor-hero-title">{healthAlerts?.ok ? 'Todos os sistemas operacionais' : 'Problemas detectados'}</div>
+                  <div className="monitor-hero-sub">Verificado às {healthAlerts?.hora_brasilia || '--:--'} · Brasília</div>
+                </div>
+              </div>
+              <div className="monitor-hero-stats">
+                <div className="monitor-hero-stat">
+                  <span className="monitor-hero-stat-val">{healthAlerts?.total_cliques_hoje ?? '—'}</span>
+                  <span className="monitor-hero-stat-lbl">cliques hoje</span>
+                </div>
+                <div className="monitor-hero-divider"></div>
+                <div className="monitor-hero-stat">
+                  <span className="monitor-hero-stat-val">{healthAlerts?.total_cliques_1h ?? '—'}</span>
+                  <span className="monitor-hero-stat-lbl">última hora</span>
+                </div>
+                <div className="monitor-hero-divider"></div>
+                <div className="monitor-hero-stat">
+                  <span className="monitor-hero-stat-val">
+                    {healthAlerts?.numeros_ativos ? Object.values(healthAlerts.numeros_ativos).reduce((t, v) => t + Number(v || 0), 0) : '—'}
+                  </span>
+                  <span className="monitor-hero-stat-lbl">números ativos</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Gráfico tempo real (#6) */}
+            <div className="realtime-card">
+              <div className="realtime-header">
+                <div className="realtime-header-left">
+                  <span className="realtime-live-badge"><span className="live-dot"></span>AO VIVO</span>
+                  <h3>Cliques em Tempo Real</h3>
+                </div>
+                <span className="realtime-subtitle">Últimos 60 min · <strong>{realtimeData?.total ?? 0}</strong> cliques</span>
+              </div>
+              <div className="realtime-chart-wrap">
+                {realtimeData?.minutos ? (
+                  <>
+                    <div className="realtime-grid-lines">
+                      <div className="grid-line"></div>
+                      <div className="grid-line"></div>
+                      <div className="grid-line"></div>
+                    </div>
+                    <div className="realtime-chart">
+                      {realtimeData.minutos.map((val, i) => {
+                        const heightPct = realtimeData.pico > 0 ? (val / realtimeData.pico) * 100 : 0;
+                        const isRecent = i >= 55;
+                        const minutesAgo = 60 - i - 1;
+                        const label = minutesAgo === 0 ? 'agora' : `${minutesAgo} min atrás`;
+                        return (
                           <div
-                            className="realtime-bar-fill"
-                            style={{ height: `${Math.max(heightPct, val > 0 ? 4 : 0)}%` }}
-                          ></div>
+                            key={i}
+                            className={`realtime-bar-col ${isRecent ? 'realtime-recent' : ''} ${val > 0 ? 'has-value' : ''}`}
+                            onMouseEnter={() => setHoveredBar({ i, val, label })}
+                            onMouseLeave={() => setHoveredBar(null)}
+                          >
+                            {hoveredBar?.i === i && val > 0 && (
+                              <div className="bar-tooltip">
+                                <span className="bar-tooltip-val">{val}</span>
+                                <span className="bar-tooltip-lbl">{label}</span>
+                              </div>
+                            )}
+                            <div className="realtime-bar-bg">
+                              <div
+                                className="realtime-bar-fill"
+                                style={{ height: `${Math.max(heightPct, val > 0 ? 4 : 0)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="realtime-loading">Carregando dados...</div>
+                )}
+              </div>
+              <div className="realtime-labels">
+                <span>-60 min</span>
+                <span>-45 min</span>
+                <span>-30 min</span>
+                <span>-15 min</span>
+                <span>agora</span>
+              </div>
+            </div>
+
+            {/* Alertas e Avisos */}
+            {healthAlerts && (healthAlerts.problemas.length > 0 || healthAlerts.avisos.length > 0) && (
+              <div className="monitoring-alerts-card">
+                <h3>📋 Alertas e Avisos</h3>
+                {healthAlerts.problemas.length > 0 && (
+                  <div className="monitoring-alert-group">
+                    <h4 className="alert-group-title alert-danger-title">🚨 Problemas ({healthAlerts.problemas.length})</h4>
+                    {healthAlerts.problemas.map((p, i) => (
+                      <div key={i} className="monitoring-alert-item alert-item-danger">
+                        <span>{p.mensagem}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {healthAlerts.avisos.length > 0 && (
+                  <div className="monitoring-alert-group">
+                    <h4 className="alert-group-title alert-warn-title">💡 Avisos ({healthAlerts.avisos.length})</h4>
+                    {healthAlerts.avisos.map((a, i) => (
+                      <div key={i} className="monitoring-alert-item alert-item-warn">
+                        <span>{a.mensagem}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {healthAlerts && healthAlerts.problemas.length === 0 && healthAlerts.avisos.length === 0 && (
+              <div className="monitoring-alerts-card monitoring-all-clear">
+                <span className="all-clear-icon">🎉</span>
+                <span className="all-clear-text">Nenhum alerta ativo. Sistema funcionando normalmente!</span>
+              </div>
+            )}
+
+            {/* Info Workflows n8n */}
+            <div className="monitoring-workflows-card">
+              <h3>🤖 Workflows n8n</h3>
+              <div className="workflow-list">
+                <div className="workflow-item">
+                  <span className="workflow-status-dot dot-active"></span>
+                  <div className="workflow-info">
+                    <span className="workflow-name">📧 Relatório Diário</span>
+                    <span className="workflow-detail">Envio automático por e-mail às 22h · Resumo completo do dia</span>
+                  </div>
+                </div>
+                <div className="workflow-item">
+                  <span className="workflow-status-dot dot-active"></span>
+                  <div className="workflow-info">
+                    <span className="workflow-name">🚨 Alertas de Problemas</span>
+                    <span className="workflow-detail">Verificação a cada 2h · Envia e-mail se detectar problemas</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Atividade Recente */}
+            {activityLog.length > 0 && (
+              <div className="monitoring-activity-card">
+                <h3>📋 Atividade Recente</h3>
+                <div className="monitoring-activity-list">
+                  {activityLog.slice(0, 10).map((log) => {
+                    const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
+                    const acaoColor = { adicionou: 'activity-add', removeu: 'activity-remove', pausou: 'activity-pause', ativou: 'activity-activate' };
+                    const dt = new Date(log.created_at);
+                    const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    return (
+                      <div key={log.id} className="monitoring-activity-item">
+                        <div className={`activity-icon-wrap ${acaoColor[log.acao] || ''}`}>
+                          <span>{acaoEmoji[log.acao] || '•'}</span>
+                        </div>
+                        <div className="monitoring-activity-body">
+                          <span className="monitoring-activity-text">
+                            <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
+                          </span>
+                          <span className="monitoring-activity-time">{timeStr}</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </>
-            ) : (
-              <div className="realtime-loading">Carregando dados...</div>
-            )}
-          </div>
-          <div className="realtime-labels">
-            <span>-60 min</span>
-            <span>-45 min</span>
-            <span>-30 min</span>
-            <span>-15 min</span>
-            <span>agora</span>
-          </div>
-        </div>
-
-        {/* Alertas e Avisos */}
-        {healthAlerts && (healthAlerts.problemas.length > 0 || healthAlerts.avisos.length > 0) && (
-          <div className="monitoring-alerts-card">
-            <h3>📋 Alertas e Avisos</h3>
-            {healthAlerts.problemas.length > 0 && (
-              <div className="monitoring-alert-group">
-                <h4 className="alert-group-title alert-danger-title">🚨 Problemas ({healthAlerts.problemas.length})</h4>
-                {healthAlerts.problemas.map((p, i) => (
-                  <div key={i} className="monitoring-alert-item alert-item-danger">
-                    <span>{p.mensagem}</span>
-                  </div>
-                ))}
               </div>
             )}
-            {healthAlerts.avisos.length > 0 && (
-              <div className="monitoring-alert-group">
-                <h4 className="alert-group-title alert-warn-title">💡 Avisos ({healthAlerts.avisos.length})</h4>
-                {healthAlerts.avisos.map((a, i) => (
-                  <div key={i} className="monitoring-alert-item alert-item-warn">
-                    <span>{a.mensagem}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {healthAlerts && healthAlerts.problemas.length === 0 && healthAlerts.avisos.length === 0 && (
-          <div className="monitoring-alerts-card monitoring-all-clear">
-            <span className="all-clear-icon">🎉</span>
-            <span className="all-clear-text">Nenhum alerta ativo. Sistema funcionando normalmente!</span>
-          </div>
-        )}
-
-        {/* Info Workflows n8n */}
-        <div className="monitoring-workflows-card">
-          <h3>🤖 Workflows n8n</h3>
-          <div className="workflow-list">
-            <div className="workflow-item">
-              <span className="workflow-status-dot dot-active"></span>
-              <div className="workflow-info">
-                <span className="workflow-name">📧 Relatório Diário</span>
-                <span className="workflow-detail">Envio automático por e-mail às 22h · Resumo completo do dia</span>
-              </div>
-            </div>
-            <div className="workflow-item">
-              <span className="workflow-status-dot dot-active"></span>
-              <div className="workflow-info">
-                <span className="workflow-name">🚨 Alertas de Problemas</span>
-                <span className="workflow-detail">Verificação a cada 2h · Envia e-mail se detectar problemas</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Atividade Recente */}
-        {activityLog.length > 0 && (
-          <div className="monitoring-activity-card">
-            <h3>📋 Atividade Recente</h3>
-            <div className="monitoring-activity-list">
-              {activityLog.slice(0, 10).map((log) => {
-                const acaoEmoji = { adicionou: '➕', removeu: '🗑️', pausou: '⏸️', ativou: '▶️' };
-                const acaoColor = { adicionou: 'activity-add', removeu: 'activity-remove', pausou: 'activity-pause', ativou: 'activity-activate' };
-                const dt = new Date(log.created_at);
-                const timeStr = dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                return (
-                  <div key={log.id} className="monitoring-activity-item">
-                    <div className={`activity-icon-wrap ${acaoColor[log.acao] || ''}`}>
-                      <span>{acaoEmoji[log.acao] || '•'}</span>
-                    </div>
-                    <div className="monitoring-activity-body">
-                      <span className="monitoring-activity-text">
-                        <strong>{log.usuario}</strong> {log.acao} <strong>{formatarNumero(log.numero)}</strong>
-                      </span>
-                      <span className="monitoring-activity-time">{timeStr}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         )}
       </div>
-      )}
-    </div>
     </div>
   );
 }
