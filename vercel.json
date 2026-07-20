@@ -28,6 +28,8 @@
     { "source": "/b09", "destination": "/api/bolsa-cp" },
     { "source": "/renegociacao", "destination": "/api/renegociacao" },
     { "source": "/refin", "destination": "/api/whats-refin" },
-    { "source": "/b10", "destination": "/api/whats-refin" }
+    { "source": "/b10", "destination": "/api/whats-refin" },
+    { "source": "/b02", "destination": "/api/whats-bolsa-familia-b02" },
+    { "source": "/f02", "destination": "/api/fgts-f02" }
   ]
 }
