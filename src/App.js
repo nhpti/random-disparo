@@ -545,6 +545,7 @@ function App() {
     ],
     'bolsa-familia': [
       { key: 'bf1', label: 'Bolsa Familia principal', tipo: 'Principal', codigo: 'bf1', path: '/bolsa-familia' },
+      { key: 'parceiros-bf', label: 'Parceiros Bolsa Família', tipo: 'Parceiros LP', codigo: 'LP', path: '/bolsa-familia' },
       { key: 'b07', label: 'WhatsApp Bolsa Familia', tipo: 'WhatsApp', codigo: 'b07', path: '', domain: 'https://whats.nhpbolsa.com' },
       { key: 'b09', label: 'WhatsApp Bolsa CP', tipo: 'WhatsApp', codigo: 'b09', path: '', domain: 'https://cp.nhpbolsa.com' },
       { key: 'b10', label: 'WhatsApp Refinanciamento', tipo: 'WhatsApp', codigo: 'b10', path: '', domain: 'https://refin.nhpbolsa.com' },

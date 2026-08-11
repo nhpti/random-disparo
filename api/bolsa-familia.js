@@ -10,13 +10,13 @@ const { getNextNumero } = require('../lib/round-robin');
 
 const TABELA_NUMEROS = 'numeros_bolsa_familia';
 
-const MENSAGEM = '(bf1) Olá! Quero saber mais sobre o empréstimo Bolsa Família!';
-
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const codigoOrigem = (req.query.origem || req.query.ab || 'bf1').trim();
+  const MENSAGEM = `(${codigoOrigem}) Olá! Quero saber mais sobre o empréstimo Bolsa Família!`;
   const textParam = `?text=${encodeURIComponent(MENSAGEM)}`;
 
   try {
