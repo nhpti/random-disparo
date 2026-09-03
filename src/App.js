@@ -508,6 +508,7 @@ function App() {
   const extraDisparoLinks = {
     fgts: [
       { key: 'bc06', label: 'WhatsApp CLT (bc06)', path: '/clt', domain: 'https://clt.nhcred.com' },
+      { key: 's9', label: 'Simular CLT (s9)', path: '/simular-clt', domain: 'https://clt.nhcred.com' },
       { key: 'cj3', label: 'Jeffinho CLT (cj3)', path: '/jclt', domain: 'https://clt.canaldojefinho.com' },
       { key: 'cj2', label: 'Jeffinho TikTok (cj2)', path: '/jtiktok', domain: 'https://canaldojefinhot.com' },
       { key: 'di1', label: 'Disparo Interno FGTS (di1)', path: '/disparointerno', domain: 'https://disparo.nhpfgts.com' },
@@ -533,6 +534,7 @@ function App() {
       { key: 'b05', label: 'FGTS principal', tipo: 'Principal', codigo: 'b05', path: '/fgts' },
       { key: 'di1', label: 'Disparo interno FGTS', tipo: 'Interno', codigo: 'di1', path: '', domain: 'https://disparo.nhpfgts.com' },
       { key: 'bc06', label: 'WhatsApp CLT', tipo: 'WhatsApp', codigo: 'bc06', path: '/clt', domain: 'https://clt.nhcred.com' },
+      { key: 's9', label: 'Simular CLT', tipo: 'WhatsApp', codigo: 's9', path: '/simular-clt', domain: 'https://clt.nhcred.com' },
       { key: 'f02', label: 'WhatsApp FGTS F02 Janela 24H', tipo: 'WhatsApp', codigo: 'f02', path: '/f02' },
       { key: 'b01', label: 'Disparo Sergio (b01)', tipo: 'Disparo Sergio', codigo: 'b01', path: '/b01' },
       { key: 'sf1', label: 'SMS FGTS', tipo: 'SMS', codigo: 'sf1', path: '/sms-fgts', domain: 'https://sms.nhpfgts.com' },
