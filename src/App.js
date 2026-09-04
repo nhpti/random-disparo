@@ -7,6 +7,7 @@ import {
   getActivityLog, getDashboardStats,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
   getHealthStatus, getRealtimeChart,
+  getRotasParceiros, addRotaParceiro, updateRotaParceiro, deleteRotaParceiro,
 } from './api';
 import { supabase } from './supabaseClient';
 import './App.css';
@@ -151,6 +152,18 @@ function App() {
   const [novoUsuarioEmail, setNovoUsuarioEmail] = useState('');
   const [novoUsuarioSenha, setNovoUsuarioSenha] = useState('');
   const [novoUsuarioRole, setNovoUsuarioRole] = useState('operador');
+  // Estado de Navegação da Aplicação ('produtos', 'rotas')
+  const [paginaAtual, setPaginaAtual] = useState('produtos');
+  const [showNovaRotaModal, setShowNovaRotaModal] = useState(false);
+  const [rotaEmEdicaoId, setRotaEmEdicaoId] = useState(null);
+  const [rotas, setRotas] = useState([]);
+  const [novaRotaParceiro, setNovaRotaParceiro] = useState('');
+  const [novaRotaOrigem, setNovaRotaOrigem] = useState('');
+  const [novaRotaProduto, setNovaRotaProduto] = useState('fgts');
+  const [novaRotaTemplate, setNovaRotaTemplate] = useState('{origem} Olá, vim através do Instagram da Novo Horizonte e quero saber mais sobre o Consignado.');
+  // Filtros de Rotas
+  const [rotasSearch, setRotasSearch] = useState('');
+  const [rotasFiltroProduto, setRotasFiltroProduto] = useState('todos');
   // Filtro por período
   const hoje = new Date().toISOString().split('T')[0];
   const [filtroInicio, setFiltroInicio] = useState(() => {
@@ -396,6 +409,166 @@ function App() {
       await deleteUsuario(id, session.access_token);
       showToast('Usuário removido.');
       fetchUsuarios();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // ── Rotas de Parceiros ──
+  const fetchRotas = useCallback(async () => {
+    if (!session) return;
+    try {
+      const data = await getRotasParceiros(session.access_token);
+      setRotas(data || []);
+    } catch (err) {
+      console.error('Erro ao buscar rotas:', err);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (paginaAtual === 'rotas') fetchRotas();
+  }, [paginaAtual, fetchRotas]);
+
+  // ── Opções de Produtos para Rotas de Parceiros ──
+  const PRODUTOS_ROTAS = {
+    fgts: {
+      nome: 'FGTS',
+      labelMensagem: 'o Crédito FGTS',
+      randomizadorKey: 'fgts',
+      randomizadorNome: 'CLT & FGTS',
+      randomizadorEmoji: '💼',
+    },
+    clt: {
+      nome: 'CLT',
+      labelMensagem: 'o Crédito do Trabalhador',
+      randomizadorKey: 'fgts',
+      randomizadorNome: 'CLT & FGTS',
+      randomizadorEmoji: '💼',
+    },
+    'garantia-veicular': {
+      nome: 'Garantia Veicular',
+      labelMensagem: 'o Crédito com Garantia Veicular',
+      randomizadorKey: 'fgts',
+      randomizadorNome: 'CLT & FGTS',
+      randomizadorEmoji: '💼',
+    },
+    inss: {
+      nome: 'INSS',
+      labelMensagem: 'o Crédito INSS',
+      randomizadorKey: 'bolsa-familia',
+      randomizadorNome: 'Bolsa Família',
+      randomizadorEmoji: '👨‍👩‍👧‍👦',
+    },
+    'bolsa-familia': {
+      nome: 'Bolsa Família',
+      labelMensagem: 'o Crédito Bolsa Família',
+      randomizadorKey: 'bolsa-familia',
+      randomizadorNome: 'Bolsa Família',
+      randomizadorEmoji: '👨‍👩‍👧‍👦',
+    },
+    bolsa: {
+      nome: 'Randomizador Jeffinho',
+      labelMensagem: 'o Crédito Jeffinho',
+      randomizadorKey: 'bolsa',
+      randomizadorNome: 'Jeffinho',
+      randomizadorEmoji: '🎯',
+    },
+    renegociacao: {
+      nome: 'Renegociação',
+      labelMensagem: 'o Crédito para Renegociação',
+      randomizadorKey: 'renegociacao',
+      randomizadorNome: 'Renegociação',
+      randomizadorEmoji: '↻',
+    },
+  };
+
+  const gerarMensagemPadrao = (parceiro, prodKey, origem) => {
+    const nomeParceiro = parceiro?.trim() ? parceiro.trim() : '{parceiro}';
+    const codigoOrigem = origem?.trim() ? `(${origem.trim()})` : '({origem})';
+    const prodInfo = PRODUTOS_ROTAS[prodKey];
+    const produtoTexto = prodInfo ? prodInfo.labelMensagem : 'o produto';
+    return `${codigoOrigem} Olá, vim através do ${nomeParceiro} e quero saber mais sobre ${produtoTexto}.`;
+  };
+
+  const handleAbrirNovaRota = () => {
+    setRotaEmEdicaoId(null);
+    setNovaRotaParceiro('');
+    setNovaRotaOrigem('');
+    setNovaRotaProduto('fgts');
+    setNovaRotaTemplate(gerarMensagemPadrao('', 'fgts', ''));
+    setShowNovaRotaModal(true);
+  };
+
+  const handleEditarRota = (r) => {
+    setRotaEmEdicaoId(r.id);
+    setNovaRotaParceiro(r.nome_parceiro);
+    setNovaRotaOrigem(r.codigo_origem);
+    setNovaRotaProduto(r.produto);
+    setNovaRotaTemplate(r.mensagem_template || gerarMensagemPadrao(r.nome_parceiro, r.produto, r.codigo_origem));
+    setShowNovaRotaModal(true);
+  };
+
+  const handleMudarParceiroModal = (val) => {
+    setNovaRotaParceiro(val);
+    setNovaRotaTemplate(gerarMensagemPadrao(val, novaRotaProduto, novaRotaOrigem));
+  };
+
+  const handleMudarOrigemModal = (val) => {
+    setNovaRotaOrigem(val);
+    setNovaRotaTemplate(gerarMensagemPadrao(novaRotaParceiro, novaRotaProduto, val));
+  };
+
+  const handleMudarProdutoModal = (prodKey) => {
+    setNovaRotaProduto(prodKey);
+    setNovaRotaTemplate(gerarMensagemPadrao(novaRotaParceiro, prodKey, novaRotaOrigem));
+  };
+
+  const handleAddOrUpdateRota = async () => {
+    if (!novaRotaParceiro.trim() || !novaRotaOrigem.trim()) {
+      showToast('Nome do parceiro e código de origem são obrigatórios.', 'error');
+      return;
+    }
+    try {
+      const payload = {
+        nome_parceiro: novaRotaParceiro,
+        codigo_origem: novaRotaOrigem,
+        produto: novaRotaProduto,
+        mensagem_template: novaRotaTemplate
+      };
+
+      if (rotaEmEdicaoId) {
+        await updateRotaParceiro(rotaEmEdicaoId, payload, session.access_token);
+        showToast('Rota atualizada com sucesso!');
+      } else {
+        await addRotaParceiro(payload, session.access_token);
+        showToast('Rota de parceiro criada com sucesso!');
+      }
+
+      setNovaRotaParceiro('');
+      setNovaRotaOrigem('');
+      setRotaEmEdicaoId(null);
+      setShowNovaRotaModal(false);
+      fetchRotas();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleToggleRota = async (id, ativoAtual) => {
+    try {
+      await updateRotaParceiro(id, { ativo: !ativoAtual }, session.access_token);
+      showToast(!ativoAtual ? 'Rota ativada!' : 'Rota pausada.');
+      fetchRotas();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleDeleteRota = async (id) => {
+    try {
+      await deleteRotaParceiro(id, session.access_token);
+      showToast('Rota removida.');
+      fetchRotas();
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -673,16 +846,20 @@ function App() {
     );
   }
 
-  // ── Seleção de Produto ──
-  if (!produto) {
+  // ── Página Separada: Rotas de Parceiros ──
+  if (paginaAtual === 'rotas') {
     return (
-      <div className="page">
+      <div className="page page-transition">
         {toast && (
           <div className={`toast toast-${toast.type}`}>
             <span>{toast.type === 'success' ? '✓' : '✕'}</span> {toast.message}
           </div>
         )}
         <div className="top-bar">
+          <button className="btn-voltar" onClick={() => setPaginaAtual('produtos')}>
+            ← Voltar para Produtos
+          </button>
+          <div style={{ flex: 1 }}></div>
           <button className="btn-theme" onClick={() => setDarkMode(!darkMode)}
             title={darkMode ? 'Modo claro' : 'Modo escuro'}>
             {darkMode ? '☀️' : '🌙'}
@@ -690,14 +867,294 @@ function App() {
           <span className="user-email">👤 {session.user.email}</span>
           <button className="btn-logout" onClick={handleLogout}>Sair</button>
         </div>
-        <h1>Random Disparo</h1>
-        <p className="subtitle">Selecione o produto para gerenciar</p>
-        {/* Botão Gerenciar Usuários (admin) */}
-        {isAdmin && (
-          <button className="btn-manage-users" onClick={() => setShowUsuarios(!showUsuarios)}>
-            👥 Gerenciar Usuários
+
+        <h1>🤝 Rotas de Parceiros</h1>
+        <p className="subtitle" style={{ marginBottom: '20px' }}>
+          Gerencie links dinâmicos e origens para influenciadores e campanhas.
+        </p>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+          <button
+            className="btn-rotas-parceiros"
+            onClick={handleAbrirNovaRota}
+          >
+            + Criar Rota de Parceiro
           </button>
+        </div>
+
+        {/* Modal de Criação / Edição de Rota */}
+        {showNovaRotaModal && (
+          <div className="modal-overlay" onClick={() => setShowNovaRotaModal(false)}>
+            <div className="modal" style={{ maxWidth: '540px', width: '92%', textAlign: 'left' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, color: 'var(--accent)', fontSize: '1.2rem' }}>
+                  🤝 {rotaEmEdicaoId ? 'Editar Rota de Parceiro' : 'Nova Rota de Parceiro'}
+                </h3>
+                <button className="btn-close-usuarios" onClick={() => setShowNovaRotaModal(false)}>✕</button>
+              </div>
+
+              <div className="usuario-add-form" style={{ flexDirection: 'column', gap: '14px', alignItems: 'stretch' }}>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 2, minWidth: '160px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8, display: 'block', marginBottom: '4px', textAlign: 'left' }}>Parceiro:</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: João Silva"
+                      value={novaRotaParceiro}
+                      onChange={(e) => handleMudarParceiroModal(e.target.value)}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: '90px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8, display: 'block', marginBottom: '4px', textAlign: 'left' }}>Origem:</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: i8"
+                      value={novaRotaOrigem}
+                      onChange={(e) => handleMudarOrigemModal(e.target.value)}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div style={{ flex: 1.3, minWidth: '150px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8, display: 'block', marginBottom: '4px', textAlign: 'left' }}>Produto:</label>
+                    <select
+                      value={novaRotaProduto}
+                      onChange={(e) => handleMudarProdutoModal(e.target.value)}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-color)' }}
+                    >
+                      <option value="fgts">FGTS</option>
+                      <option value="clt">CLT</option>
+                      <option value="garantia-veicular">Garantia Veicular</option>
+                      <option value="inss">INSS</option>
+                      <option value="bolsa-familia">Bolsa Família</option>
+                      <option value="bolsa">Randomizador Jeffinho</option>
+                      <option value="renegociacao">Renegociação</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8, textAlign: 'left' }}>
+                      Template de Mensagem do WhatsApp:
+                    </label>
+                    <span style={{ fontSize: '11px', color: 'var(--accent)', opacity: 0.9 }}>
+                      (atualiza conforme o parceiro, origem e produto)
+                    </span>
+                  </div>
+                  <textarea
+                    rows="3"
+                    value={novaRotaTemplate}
+                    onChange={(e) => setNovaRotaTemplate(e.target.value)}
+                    placeholder="{origem} Olá, vim através do {parceiro} e quero saber mais sobre..."
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-color)', fontFamily: 'inherit' }}
+                  />
+                </div>
+
+                <div className="modal-buttons" style={{ justifyContent: 'flex-end', marginTop: '8px' }}>
+                  <button className="btn-cancel" onClick={() => setShowNovaRotaModal(false)}>Cancelar</button>
+                  <button className="btn-add" onClick={handleAddOrUpdateRota} style={{ padding: '10px 24px' }}>
+                    {rotaEmEdicaoId ? 'Salvar Alterações' : 'Criar Rota'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
+
+        {/* Barra de Pesquisa e Filtros */}
+        <div className="rotas-filters-bar">
+          <input
+            type="text"
+            className="rotas-search-input"
+            placeholder="🔍 Buscar por parceiro ou código de origem..."
+            value={rotasSearch}
+            onChange={(e) => setRotasSearch(e.target.value)}
+          />
+          <select
+            className="rotas-filter-select"
+            value={rotasFiltroProduto}
+            onChange={(e) => setRotasFiltroProduto(e.target.value)}
+          >
+            <option value="todos">Todos os Produtos / Randomizadores</option>
+            <option value="fgts">FGTS</option>
+            <option value="clt">CLT</option>
+            <option value="garantia-veicular">Garantia Veicular</option>
+            <option value="bolsa-familia">Bolsa Família</option>
+            <option value="inss">INSS</option>
+            <option value="bolsa">Randomizador Jeffinho</option>
+            <option value="renegociacao">Renegociação</option>
+          </select>
+        </div>
+
+        {/* Listagem Simples de Rotas em Tabela */}
+        {(() => {
+          const termo = rotasSearch.toLowerCase().trim();
+          const rotasFiltradas = rotas.filter((r) => {
+            const matchesSearch = !termo ||
+              r.nome_parceiro.toLowerCase().includes(termo) ||
+              r.codigo_origem.toLowerCase().includes(termo);
+            const matchesFiltro = rotasFiltroProduto === 'todos' || r.produto === rotasFiltroProduto;
+            return matchesSearch && matchesFiltro;
+          });
+
+          if (rotasFiltradas.length === 0) {
+            return (
+              <div className="rotas-card" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>
+                  {rotas.length === 0 ? 'Nenhuma rota cadastrada ainda.' : 'Nenhuma rota encontrada para os filtros selecionados.'}
+                </p>
+                {rotas.length === 0 && (
+                  <p style={{ fontSize: '0.85rem' }}>Clique em <strong>"+ Criar Rota de Parceiro"</strong> para cadastrar a primeira.</p>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <div className="rotas-table-container">
+              <table className="rotas-table">
+                <thead>
+                  <tr>
+                    <th>Parceiro</th>
+                    <th>Origem</th>
+                    <th>Produto / Randomizador</th>
+                    <th>Link da Rota</th>
+                    <th style={{ textAlign: 'right' }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rotasFiltradas.map((r) => {
+                    const linkFormatado = `${window.location.origin}/r/${r.produto}/${encodeURIComponent(r.nome_parceiro.toLowerCase().replace(/\s+/g, '-'))}/${r.codigo_origem}`;
+                    const prodInfo = PRODUTOS_ROTAS[r.produto] || {
+                      nome: r.produto.toUpperCase(),
+                      randomizadorKey: r.produto,
+                      randomizadorNome: r.produto,
+                      randomizadorEmoji: '•',
+                    };
+                    const rowColorClass = `rota-row-${prodInfo.randomizadorKey}`;
+                    const statusClass = !r.ativo ? 'rota-row-pausada' : '';
+
+                    return (
+                      <tr key={r.id} className={`${rowColorClass} ${statusClass}`}>
+                        <td>
+                          <strong style={{ color: 'var(--text-primary)' }}>{r.nome_parceiro}</strong>
+                        </td>
+                        <td>
+                          <span style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold', color: 'var(--accent)' }}>
+                            {r.codigo_origem}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <span className={`badge-produto badge-${r.produto}`}>
+                              {prodInfo.nome}
+                            </span>
+                            <span className="badge-randomizador" title="Randomizador associado">
+                              {prodInfo.randomizadorEmoji} {prodInfo.randomizadorNome}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                            /r/{r.produto}/{r.codigo_origem}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="rotas-actions-col" style={{ justifyContent: 'flex-end' }}>
+                            <button
+                              className="btn-icon-action"
+                              onClick={() => {
+                                navigator.clipboard.writeText(linkFormatado);
+                                showToast('Link da rota copiado!');
+                              }}
+                              title="Copiar link"
+                            >
+                              📋 Copiar
+                            </button>
+                            <a
+                              href={linkFormatado}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-icon-action"
+                              title="Abrir rota no navegador"
+                            >
+                              🔗 Abrir
+                            </a>
+                            <button
+                              className="btn-icon-action"
+                              onClick={() => handleEditarRota(r)}
+                              title="Editar rota"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="btn-icon-action"
+                              onClick={() => handleToggleRota(r.id, r.ativo)}
+                              title={r.ativo ? 'Pausar rota' : 'Ativar rota'}
+                            >
+                              {r.ativo ? '⏸️' : '▶️'}
+                            </button>
+                            <button
+                              className="btn-icon-action danger"
+                              onClick={() => handleDeleteRota(r.id)}
+                              title="Remover rota"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
+      </div>
+    );
+  }
+
+  // ── Seleção de Produto ──
+  if (!produto) {
+    return (
+      <div className="page page-transition">
+        {toast && (
+          <div className={`toast toast-${toast.type}`}>
+            <span>{toast.type === 'success' ? '✓' : '✕'}</span> {toast.message}
+          </div>
+        )}
+        <div className="top-bar">
+          <div style={{ flex: 1 }}></div>
+          <div className="header-user-actions">
+            <button className="btn-theme" onClick={() => setDarkMode(!darkMode)}
+              title={darkMode ? 'Modo claro' : 'Modo escuro'}>
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+            <span className="user-email">👤 {session.user.email}</span>
+            <button className="btn-logout" onClick={handleLogout}>Sair</button>
+          </div>
+        </div>
+        <h1>Random Disparo</h1>
+        <p className="subtitle" style={{ marginBottom: '14px' }}>Selecione o produto para gerenciar</p>
+
+        {/* Ações principais centralizadas */}
+        <div className="home-action-buttons" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          {isAdmin && (
+            <button className="btn-manage-users" onClick={() => setShowUsuarios(!showUsuarios)}>
+              👥 Gerenciar Usuários
+            </button>
+          )}
+          <button
+            className="btn-rotas-parceiros"
+            onClick={() => setPaginaAtual('rotas')}
+          >
+            🤝 Rotas de Parceiros
+          </button>
+        </div>
 
         {/* Painel de Usuários */}
         {showUsuarios && isAdmin && (
@@ -824,7 +1281,7 @@ function App() {
         )}
       </div>
 
-      <div className="page">
+      <div className="page page-transition">
         {/* Botão toggle log */}
         <button className="btn-log-toggle" onClick={() => setLogOpen(!logOpen)} title="Log de Atividades">
           📋

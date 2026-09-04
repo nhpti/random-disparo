@@ -33,6 +33,9 @@
     { "source": "/b02", "destination": "/api/whats-bolsa-familia-b02" },
     { "source": "/b03", "destination": "/api/whats-bolsa-familia-b03" },
     { "source": "/b01", "destination": "/api/fgts-b01" },
-    { "source": "/f02", "destination": "/api/fgts-f02" }
+    { "source": "/f02", "destination": "/api/fgts-f02" },
+    { "source": "/r/:produto/:parceiro/:origem", "destination": "/api/r?produto=:produto&parceiro=:parceiro&origem=:origem" },
+    { "source": "/r/:produto/:parceiro", "destination": "/api/r?produto=:produto&parceiro=:parceiro" },
+    { "source": "/r/:origem", "destination": "/api/r?origem=:origem" }
   ]
 }

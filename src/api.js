@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient';
+
 // Na Vercel, as API routes ficam no mesmo domínio, então não precisa de URL base
 const API = '';
 
@@ -365,4 +367,67 @@ export async function getRealtimeChart(token) {
   });
   if (!res.ok) throw new Error('Erro ao buscar dados em tempo real');
   return res.json();
+}
+
+// ── ROTAS PARCEIROS ──
+export async function getRotasParceiros(token) {
+  const { data, error } = await supabase
+    .from('rotas_parceiros')
+    .select('*')
+    .order('criado_em', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addRotaParceiro(dados, token) {
+  const { nome_parceiro, codigo_origem, produto, mensagem_template } = dados;
+  if (!nome_parceiro || !codigo_origem || !produto || !mensagem_template) {
+    throw new Error('Preencha todos os campos obrigatórios.');
+  }
+
+  const { data, error } = await supabase
+    .from('rotas_parceiros')
+    .insert({
+      nome_parceiro: nome_parceiro.trim(),
+      codigo_origem: codigo_origem.trim().toLowerCase(),
+      produto: produto.trim().toLowerCase(),
+      mensagem_template: mensagem_template.trim(),
+      ativo: true
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateRotaParceiro(id, dados, token) {
+  const { nome_parceiro, codigo_origem, produto, mensagem_template, ativo } = dados;
+  const updates = { atualizado_em: new Date().toISOString() };
+  if (nome_parceiro !== undefined) updates.nome_parceiro = nome_parceiro.trim();
+  if (codigo_origem !== undefined) updates.codigo_origem = codigo_origem.trim().toLowerCase();
+  if (produto !== undefined) updates.produto = produto.trim().toLowerCase();
+  if (mensagem_template !== undefined) updates.mensagem_template = mensagem_template.trim();
+  if (ativo !== undefined) updates.ativo = ativo;
+
+  const { data, error } = await supabase
+    .from('rotas_parceiros')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteRotaParceiro(id, token) {
+  const { error } = await supabase
+    .from('rotas_parceiros')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  return { success: true };
 }

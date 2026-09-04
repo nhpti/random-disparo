@@ -248,8 +248,72 @@ h1 {
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.92) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Animação Simples e Global de Transição de Página ── */
+.page-transition {
+  animation: pageFadeIn 0.2s ease-out;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+
+
+/* ── Estilos da Página Separada de Rotas de Parceiros ── */
+.rotas-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.rotas-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.rotas-tab-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+}
+
+.rotas-tab-btn:hover {
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.rotas-tab-btn.active {
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 2px 8px rgba(41, 121, 255, 0.3);
+}
+
+.rotas-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  animation: modalIn 0.3s ease;
 }
 
 /* ── Loading Spinner ── */
@@ -267,23 +331,164 @@ h1 {
   to { transform: rotate(360deg); }
 }
 
-/* ── Top Bar ── */
+/* ── Estilos de Botões da Listagem de Rotas ── */
+.btn-action-route {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg-item);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-action-route:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.btn-action-open {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent-light);
+}
+
+.btn-action-open:hover {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.btn-action-pause {
+  background: var(--bg-item);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-action-pause:hover {
+  background: rgba(239, 83, 80, 0.1);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-action-activate {
+  background: var(--success-bg);
+  border-color: var(--success-bg);
+  color: var(--success);
+}
+
+.btn-action-activate:hover {
+  background: var(--success);
+  color: #ffffff;
+}
+
+/* ── Top Bar / Cabeçalho Responsivo da Aplicação ── */
 .top-bar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.header-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.header-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* ── Estilos Padronizados dos Botões do Cabeçalho ── */
+.btn-manage-users,
+.btn-rotas-parceiros,
+.btn-voltar,
+.btn-logout {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+  margin: 0;
+  transition: all 0.2s ease;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.btn-manage-users {
+  background: var(--bg-item);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-manage-users:hover {
+  border-color: var(--accent);
+  background: var(--bg-item-hover);
+}
+
+.btn-rotas-parceiros {
+  background: var(--accent);
+  color: #ffffff !important;
+  border: 1px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(41, 121, 255, 0.25);
+}
+
+.btn-rotas-parceiros:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-voltar {
+  background: var(--bg-item);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-voltar:hover {
+  border-color: var(--accent);
+  background: var(--bg-item-hover);
 }
 
 .btn-theme {
+  height: 38px;
+  width: 38px;
+  min-width: 38px;
   background: var(--bg-item);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 0;
   font-size: 1rem;
   cursor: pointer;
+  margin: 0;
+  box-sizing: border-box;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 
@@ -295,18 +500,299 @@ h1 {
 .user-email {
   font-size: 0.8rem;
   color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  line-height: 38px;
 }
 
 .btn-logout {
-  padding: 6px 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
   background: transparent;
   color: var(--danger);
+  font-size: 0.8rem;
+}
+
+.btn-logout:hover {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* ── Barra de Pesquisa e Filtros de Rotas ── */
+.rotas-filters-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.rotas-search-input {
+  flex: 1;
+  min-width: 200px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.rotas-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rotas-filter-select {
+  height: 38px;
+  min-width: 150px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* ── Tabela Compacta de Rotas ── */
+.rotas-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
+.rotas-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.rotas-table th {
+  padding: 10px 14px;
+  background: var(--bg-item);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.rotas-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.rotas-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Cores de fundo por Randomizador / Produto */
+.rota-row-fgts {
+  background: rgba(41, 121, 255, 0.05);
+}
+.rota-row-fgts:hover {
+  background: rgba(41, 121, 255, 0.1);
+}
+
+.rota-row-bolsa {
+  background: rgba(245, 158, 11, 0.06);
+}
+.rota-row-bolsa:hover {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.rota-row-bolsa-familia {
+  background: rgba(16, 185, 129, 0.06);
+}
+.rota-row-bolsa-familia:hover {
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.rota-row-renegociacao {
+  background: rgba(139, 92, 246, 0.06);
+}
+.rota-row-renegociacao:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.rota-row-pausada {
+  opacity: 0.6;
+}
+
+/* Badges de Produto e Randomizador */
+.badge-produto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.badge-fgts {
+  background: rgba(41, 121, 255, 0.15);
+  color: #2979ff;
+  border: 1px solid rgba(41, 121, 255, 0.3);
+}
+
+.badge-clt {
+  background: rgba(2, 132, 199, 0.15);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+.badge-garantia-veicular {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.badge-inss {
+  background: rgba(5, 150, 105, 0.15);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+.badge-bolsa {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-bolsa-familia {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-renegociacao {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.badge-randomizador {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--bg-item);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Coluna de ações compacta */
+.rotas-actions-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-icon-action {
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-item);
+  color: var(--text-primary);
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.btn-icon-action:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.btn-icon-action.danger:hover {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.btn-manage-users {
+  background: var(--bg-item);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-manage-users:hover {
+  border-color: var(--accent);
+  background: var(--bg-item-hover);
+}
+
+.btn-rotas-parceiros {
+  background: var(--accent);
+  color: #ffffff !important;
+  border: 1px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(41, 121, 255, 0.25);
+}
+
+.btn-rotas-parceiros:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-theme {
+  height: 38px;
+  min-width: 38px;
+  background: var(--bg-item);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 1rem;
+  cursor: pointer;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-theme:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-logout {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--danger);
+  font-size: 0.8rem;
 }
 
 .btn-logout:hover {
@@ -981,25 +1467,32 @@ body.dark .role-admin { background: rgba(76,175,80,0.15); color: #81c784; }
 body.dark .role-operador { background: rgba(33,150,243,0.15); color: #64b5f6; }
 body.dark .role-viewer { background: rgba(255,152,0,0.15); color: #ffb74d; }
 
-/* ── Gerenciar Usuários ── */
-.btn-manage-users {
-  display: block;
-  margin: 0 auto 20px;
-  padding: 10px 24px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+/* ── Botões de Ação na Home (Gerenciar Usuários e Rotas de Parceiros) ── */
+.home-action-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin: 0 auto 24px auto !important;
+  width: 100% !important;
 }
-.btn-manage-users:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-light);
+
+.home-action-buttons .btn-manage-users,
+.home-action-buttons .btn-rotas-parceiros {
+  display: inline-flex !important;
+  margin: 0 !important;
+  height: 38px !important;
+  padding: 0 18px !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
 }
 
 .usuarios-card {
