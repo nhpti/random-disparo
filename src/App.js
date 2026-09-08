@@ -161,6 +161,7 @@ function App() {
   const [novaRotaOrigem, setNovaRotaOrigem] = useState('');
   const [novaRotaProduto, setNovaRotaProduto] = useState('fgts');
   const [novaRotaTemplate, setNovaRotaTemplate] = useState('{origem} Olá, vim através do Instagram da Novo Horizonte e quero saber mais sobre o Consignado.');
+  const [templateEditadoManualmente, setTemplateEditadoManualmente] = useState(false);
   // Filtros de Rotas
   const [rotasSearch, setRotasSearch] = useState('');
   const [rotasFiltroProduto, setRotasFiltroProduto] = useState('todos');
@@ -495,6 +496,7 @@ function App() {
     setNovaRotaParceiro('');
     setNovaRotaOrigem('');
     setNovaRotaProduto('fgts');
+    setTemplateEditadoManualmente(false);
     setNovaRotaTemplate(gerarMensagemPadrao('', 'fgts', ''));
     setShowNovaRotaModal(true);
   };
@@ -504,23 +506,30 @@ function App() {
     setNovaRotaParceiro(r.nome_parceiro);
     setNovaRotaOrigem(r.codigo_origem);
     setNovaRotaProduto(r.produto);
+    setTemplateEditadoManualmente(true);
     setNovaRotaTemplate(r.mensagem_template || gerarMensagemPadrao(r.nome_parceiro, r.produto, r.codigo_origem));
     setShowNovaRotaModal(true);
   };
 
   const handleMudarParceiroModal = (val) => {
     setNovaRotaParceiro(val);
-    setNovaRotaTemplate(gerarMensagemPadrao(val, novaRotaProduto, novaRotaOrigem));
+    if (!templateEditadoManualmente) {
+      setNovaRotaTemplate(gerarMensagemPadrao(val, novaRotaProduto, novaRotaOrigem));
+    }
   };
 
   const handleMudarOrigemModal = (val) => {
     setNovaRotaOrigem(val);
-    setNovaRotaTemplate(gerarMensagemPadrao(novaRotaParceiro, novaRotaProduto, val));
+    if (!templateEditadoManualmente) {
+      setNovaRotaTemplate(gerarMensagemPadrao(novaRotaParceiro, novaRotaProduto, val));
+    }
   };
 
   const handleMudarProdutoModal = (prodKey) => {
     setNovaRotaProduto(prodKey);
-    setNovaRotaTemplate(gerarMensagemPadrao(novaRotaParceiro, prodKey, novaRotaOrigem));
+    if (!templateEditadoManualmente) {
+      setNovaRotaTemplate(gerarMensagemPadrao(novaRotaParceiro, prodKey, novaRotaOrigem));
+    }
   };
 
   const handleAddOrUpdateRota = async () => {
@@ -947,7 +956,10 @@ function App() {
                   <textarea
                     rows="3"
                     value={novaRotaTemplate}
-                    onChange={(e) => setNovaRotaTemplate(e.target.value)}
+                    onChange={(e) => {
+                      setTemplateEditadoManualmente(true);
+                      setNovaRotaTemplate(e.target.value);
+                    }}
                     placeholder="{origem} Olá, vim através do {parceiro} e quero saber mais sobre..."
                     style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-color)', fontFamily: 'inherit' }}
                   />

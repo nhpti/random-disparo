@@ -33,16 +33,44 @@ module.exports = async function handler(req, res) {
     let mensagemTemplate = '({origem}) Olá! Quero saber mais informações.';
     let tabelaAlvo = MAPA_PRODUTOS_TABELAS[prodKey] || 'numeros';
 
-    if (origemKey) {
-      const { data: rota } = await supabase
-        .from('rotas_parceiros')
-        .select('*')
-        .eq('codigo_origem', origemKey)
-        .eq('ativo', true)
-        .single();
+    // Determina o código de origem candidato (pode estar em origem, parceiro ou produto)
+    const codigoBusca = origemKey || parceiroKey || prodKey;
+
+    if (codigoBusca) {
+      // Tenta buscar primeiro combinando código de origem + produto específico
+      let rota = null;
+      if (prodKey) {
+        const { data: rotaProd } = await supabase
+          .from('rotas_parceiros')
+          .select('*')
+          .eq('codigo_origem', codigoBusca)
+          .eq('produto', prodKey)
+          .eq('ativo', true)
+          .order('criado_em', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (rotaProd) rota = rotaProd;
+      }
+
+      // Se não encontrou por produto específico, busca apenas pelo código de origem
+      if (!rota) {
+        const { data: rotaGenerica } = await supabase
+          .from('rotas_parceiros')
+          .select('*')
+          .eq('codigo_origem', codigoBusca)
+          .eq('ativo', true)
+          .order('criado_em', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (rotaGenerica) rota = rotaGenerica;
+      }
 
       if (rota) {
-        mensagemTemplate = rota.mensagem_template;
+        if (rota.mensagem_template && rota.mensagem_template.trim()) {
+          mensagemTemplate = rota.mensagem_template;
+        }
         if (rota.produto && MAPA_PRODUTOS_TABELAS[rota.produto]) {
           tabelaAlvo = MAPA_PRODUTOS_TABELAS[rota.produto];
         }
@@ -51,19 +79,19 @@ module.exports = async function handler(req, res) {
 
     // 2. Substituir variáveis no template ({origem}, (origem), {parceiro}, {produto})
     let mensagemFinal = mensagemTemplate
-      .replace(/\{origem\}/gi, origemKey)
-      .replace(/\(origem\)/gi, origemKey ? `(${origemKey})` : '')
+      .replace(/\{origem\}/gi, codigoBusca)
+      .replace(/\(origem\)/gi, codigoBusca ? `(${codigoBusca})` : '')
       .replace(/\{parceiro\}/gi, parceiroKey)
       .replace(/\{produto\}/gi, prodKey);
 
     // Garante que o código de origem fique formatado uma única vez
-    if (origemKey && !mensagemFinal.includes(`(${origemKey})`)) {
-      mensagemFinal = `(${origemKey}) ${mensagemFinal}`;
+    if (codigoBusca && !mensagemFinal.includes(`(${codigoBusca})`)) {
+      mensagemFinal = `(${codigoBusca}) ${mensagemFinal}`;
     }
 
     // Remove eventual parêntese duplo acidental
-    if (origemKey) {
-      mensagemFinal = mensagemFinal.replace(new RegExp(`\\(\\(${origemKey}\\)\\)`, 'gi'), `(${origemKey})`);
+    if (codigoBusca) {
+      mensagemFinal = mensagemFinal.replace(new RegExp(`\\(\\(${codigoBusca}\\)\\)`, 'gi'), `(${codigoBusca})`);
     }
 
     const textParam = `?text=${encodeURIComponent(mensagemFinal)}`;
