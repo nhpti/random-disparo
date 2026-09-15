@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  getNumeros, addNumero, deleteNumero, toggleNumero, getStats,
-  getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, getStatsBolsa,
-  getNumerosBolsaFamilia, addNumeroBolsaFamilia, deleteNumeroBolsaFamilia, toggleNumeroBolsaFamilia, getStatsBolsaFamilia,
-  getNumerosRenegociacao, addNumeroRenegociacao, deleteNumeroRenegociacao, toggleNumeroRenegociacao, getStatsRenegociacao,
+  getNumeros, addNumero, deleteNumero, toggleNumero, updateNumero, getStats,
+  getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, updateNumeroBolsa, getStatsBolsa,
+  getNumerosBolsaFamilia, addNumeroBolsaFamilia, deleteNumeroBolsaFamilia, toggleNumeroBolsaFamilia, updateNumeroBolsaFamilia, getStatsBolsaFamilia,
+  getNumerosRenegociacao, addNumeroRenegociacao, deleteNumeroRenegociacao, toggleNumeroRenegociacao, updateNumeroRenegociacao, getStatsRenegociacao,
   getActivityLog, getDashboardStats,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
   getHealthStatus, getRealtimeChart,
@@ -23,6 +23,7 @@ const PRODUTOS = {
     apiAdd: addNumero,
     apiDel: deleteNumero,
     apiToggle: toggleNumero,
+    apiUpdate: updateNumero,
     apiStats: getStats,
     testPath: '/api/fgts',
     numerosPath: '/api/numeros',
@@ -36,6 +37,7 @@ const PRODUTOS = {
     apiAdd: addNumeroBolsa,
     apiDel: deleteNumeroBolsa,
     apiToggle: toggleNumeroBolsa,
+    apiUpdate: updateNumeroBolsa,
     apiStats: getStatsBolsa,
     testPath: '/api/bolsa',
     numerosPath: '/api/numeros-bolsa',
@@ -49,6 +51,7 @@ const PRODUTOS = {
     apiAdd: addNumeroBolsaFamilia,
     apiDel: deleteNumeroBolsaFamilia,
     apiToggle: toggleNumeroBolsaFamilia,
+    apiUpdate: updateNumeroBolsaFamilia,
     apiStats: getStatsBolsaFamilia,
     testPath: '/api/bolsa-familia',
     numerosPath: '/api/numeros-bolsa-familia',
@@ -62,6 +65,7 @@ const PRODUTOS = {
     apiAdd: addNumeroRenegociacao,
     apiDel: deleteNumeroRenegociacao,
     apiToggle: toggleNumeroRenegociacao,
+    apiUpdate: updateNumeroRenegociacao,
     apiStats: getStatsRenegociacao,
     testPath: '/api/renegociacao',
     numerosPath: '/api/numeros-renegociacao',
@@ -118,6 +122,11 @@ function App() {
   // ── Admin State ──
   const [numeros, setNumeros] = useState([]);
   const [input, setInput] = useState('');
+  const [inputColaborador, setInputColaborador] = useState('');
+  const [vendedorFiltro, setVendedorFiltro] = useState(null);
+  const [editingColabId, setEditingColabId] = useState(null);
+  const [editingColabValue, setEditingColabValue] = useState('');
+  const [ordenacao, setOrdenacao] = useState('padrao');
   const [stats, setStats] = useState(null);
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -609,20 +618,54 @@ function App() {
     setHealthAlerts(null);
     setRealtimeData(null);
     setActiveTab('painel');
+    setInputColaborador('');
+    setVendedorFiltro(null);
+    setEditingColabId(null);
+    setEditingColabValue('');
+    setOrdenacao('padrao');
   };
 
   const handleAdd = async () => {
     const value = input.trim();
     if (!value || !config) return;
+    const colabValue = inputColaborador.trim();
     try {
-      await config.apiAdd(value, getAccessToken());
+      await config.apiAdd(value, getAccessToken(), colabValue || null);
       setInput('');
+      setInputColaborador('');
       showToast(`Número ${formatarNumero(value)} adicionado!`);
       fetchData();
       inputRef.current?.focus();
     } catch (err) {
       showToast('Erro ao adicionar número.', 'error');
       console.error(err);
+    }
+  };
+
+  const handleStartEditColaborador = (id, colaboradorAtual) => {
+    setEditingColabId(id);
+    setEditingColabValue(colaboradorAtual || '');
+  };
+
+  const handleSaveColaborador = async (id) => {
+    if (!config) return;
+    const novoColaborador = editingColabValue.trim();
+    try {
+      setNumeros(prev => prev.map(n => n.id === id ? { ...n, colaborador: novoColaborador || null } : n));
+      setEditingColabId(null);
+
+      await config.apiUpdate(id, { colaborador: novoColaborador || null }, getAccessToken());
+      showToast(
+        novoColaborador
+          ? `Vendedor alterado para ${novoColaborador}!`
+          : 'Vendedor desvinculado do número.',
+        'success'
+      );
+      fetchData();
+    } catch (err) {
+      showToast('Erro ao atualizar colaborador.', 'error');
+      console.error(err);
+      fetchData();
     }
   };
 
@@ -767,38 +810,105 @@ function App() {
     return { diff: Math.round(diff), up: diff >= 0 };
   };
 
-  // ── Filtrar números por busca (#4) ──
-  const numerosFiltrados = numeros.filter((n) => {
-    if (!searchTerm.trim()) return true;
-    const termo = searchTerm.toLowerCase().replace(/\D/g, '');
-    const numLimpo = n.numero.replace(/\D/g, '');
-    return numLimpo.includes(termo) || formatarNumero(n.numero).toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  // ── Lista de colaboradores existentes para o autocomplete ──
+  const colaboradoresExistentes = useMemo(() => {
+    return Array.from(
+      new Set(
+        numeros
+          .map(n => n.colaborador)
+          .filter(c => typeof c === 'string' && c.trim().length > 0)
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [numeros]);
+
+  // ── Resumo agrupado por vendedor / colaborador ──
+  const resumoVendedores = useMemo(() => {
+    const mapa = {};
+    numeros.forEach(n => {
+      const nome = (n.colaborador && n.colaborador.trim()) ? n.colaborador.trim() : 'Sem colaborador';
+      if (!mapa[nome]) {
+        mapa[nome] = {
+          nome,
+          isSemColaborador: !n.colaborador || !n.colaborador.trim(),
+          total: 0,
+          ativos: 0,
+          pausados: 0,
+          leads: 0,
+          uniqueIps: 0,
+        };
+      }
+      mapa[nome].total += 1;
+      if (n.ativo !== false) {
+        mapa[nome].ativos += 1;
+      } else {
+        mapa[nome].pausados += 1;
+      }
+      const st = getNumeroStats(n.numero);
+      mapa[nome].leads += (st.total || 0);
+      mapa[nome].uniqueIps += (st.uniqueIps || 0);
+    });
+
+    return Object.values(mapa).sort((a, b) => {
+      if (a.isSemColaborador) return 1;
+      if (b.isSemColaborador) return -1;
+      return b.leads - a.leads || a.nome.localeCompare(b.nome);
+    });
+  }, [numeros, stats]);
+
+  // ── Filtrar e ordenar números por busca, vendedor e leads ──
+  const numerosFiltrados = useMemo(() => {
+    return numeros.filter((n) => {
+      if (vendedorFiltro) {
+        if (vendedorFiltro === 'Sem colaborador') {
+          if (n.colaborador && n.colaborador.trim()) return false;
+        } else {
+          if (!n.colaborador || n.colaborador.trim().toLowerCase() !== vendedorFiltro.toLowerCase()) return false;
+        }
+      }
+
+      if (!searchTerm.trim()) return true;
+      const termo = searchTerm.toLowerCase();
+      const termoLimpo = termo.replace(/\D/g, '');
+      const numLimpo = n.numero.replace(/\D/g, '');
+      const bateuNum = (termoLimpo && numLimpo.includes(termoLimpo)) || formatarNumero(n.numero).toLowerCase().includes(termo);
+      const bateuColab = n.colaborador && n.colaborador.toLowerCase().includes(termo);
+      return bateuNum || bateuColab;
+    }).sort((a, b) => {
+      if (ordenacao === 'leads_desc') {
+        const stA = getNumeroStats(a.numero).total || 0;
+        const stB = getNumeroStats(b.numero).total || 0;
+        return stB - stA;
+      }
+      if (ordenacao === 'vendedor') {
+        const colA = a.colaborador || 'zzz';
+        const colB = b.colaborador || 'zzz';
+        return colA.localeCompare(colB);
+      }
+      return a.id - b.id;
+    });
+  }, [numeros, vendedorFiltro, searchTerm, ordenacao, stats]);
 
   // ── Exportar CSV ──
   const exportCSV = () => {
     if (!stats || numeros.length === 0) return;
     const sep = ';';
     const linhas = [];
-    // Cabeçalho do relatório
     linhas.push(`Relatório ${config.nome}`);
     linhas.push(`Período: ${filtroInicio} até ${filtroFim}`);
-    linhas.push(`Total cliques: ${stats.redirectsHoje ?? 0}`);
+    linhas.push(`Total cliques/leads: ${stats.redirectsHoje ?? 0}`);
     linhas.push(`IPs únicos: ${stats.uniqueHoje ?? 0}`);
     linhas.push('');
-    // Cabeçalho da tabela
-    linhas.push(['Número', 'Cliques', 'IPs Únicos', 'Status'].join(sep));
-    // Dados por número
+    linhas.push(['Número', 'Colaborador / Vendedor', 'Leads Recebidos', 'IPs Únicos', 'Status'].join(sep));
     numeros.forEach((n) => {
       const st = getNumeroStats(n.numero);
       linhas.push([
         formatarNumero(n.numero),
+        n.colaborador || 'Sem colaborador',
         st.total,
         st.uniqueIps,
         n.ativo !== false ? 'Ativo' : 'Pausado',
       ].join(sep));
     });
-    // Gerar e baixar arquivo
     const bom = '\uFEFF';
     const blob = new Blob([bom + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -1482,47 +1592,131 @@ function App() {
               )}
             </div>
 
-            {/* Números Ativos */}
+            {/* Números e Resumo por Vendedor */}
             <div className="numbers-card">
               <div className="card-header">
                 <h2>Números</h2>
-                <span className="counter">{numerosAtivos} / {numeros.length}</span>
+                <span className="counter">{numerosAtivos} / {numeros.length} ativos</span>
               </div>
 
-              {/* Busca/Filtro de números (#4) */}
-              {numeros.length > 5 && (
-                <div className="search-numeros">
-                  <span className="search-icon">🔍</span>
-                  <input
-                    type="text"
-                    placeholder="Buscar número..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input"
-                  />
-                  {searchTerm && (
-                    <button className="search-clear" onClick={() => setSearchTerm('')}>✕</button>
-                  )}
-                  {searchTerm && (
-                    <span className="search-count">{numerosFiltrados.length} de {numeros.length}</span>
+              {/* ── Resumo por Vendedor / Colaborador ── */}
+              {numeros.length > 0 && (
+                <div className="resumo-vendedores-section">
+                  <div className="resumo-vendedores-header">
+                    <div className="resumo-vendedores-title">
+                      <span className="resumo-icon">👥</span>
+                      <h3>Resumo por Vendedor</h3>
+                      <span className="resumo-count-badge">
+                        {resumoVendedores.filter(v => !v.isSemColaborador).length} cadastrado{resumoVendedores.filter(v => !v.isSemColaborador).length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    {vendedorFiltro && (
+                      <button
+                        className="btn-clear-vendedor-filtro"
+                        onClick={() => setVendedorFiltro(null)}
+                        title="Ver todos os números"
+                      >
+                        Limpar filtro ({vendedorFiltro}) ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="vendedores-grid">
+                    {resumoVendedores.map((v) => {
+                      const isSelected = vendedorFiltro === v.nome;
+                      return (
+                        <div
+                          key={v.nome}
+                          className={`vendedor-card ${isSelected ? 'vendedor-card-active' : ''} ${v.isSemColaborador ? 'vendedor-card-unassigned' : ''}`}
+                          onClick={() => setVendedorFiltro(isSelected ? null : v.nome)}
+                          title={`Clique para filtrar números de ${v.nome}`}
+                        >
+                          <div className="vendedor-card-top">
+                            <div className="vendedor-card-nome">
+                              <span className="vendedor-avatar">{v.isSemColaborador ? '❓' : '👤'}</span>
+                              <strong className="vendedor-nome-text">{v.nome}</strong>
+                            </div>
+                            <span className="vendedor-total-nums">{v.total} tel{v.total > 1 ? 's' : ''}</span>
+                          </div>
+
+                          <div className="vendedor-card-stats">
+                            <span className="vendedor-pill vendedor-pill-ativo" title="Números ativos">
+                              <span className="status-dot dot-green"></span> {v.ativos} ativo{v.ativos !== 1 ? 's' : ''}
+                            </span>
+                            <span className="vendedor-pill vendedor-pill-pausado" title="Números pausados">
+                              <span className="status-dot dot-gray"></span> {v.pausados} pausado{v.pausados !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+
+                          <div className="vendedor-card-leads">
+                            <span className="vendedor-leads-icon">🎯</span>
+                            <span className="vendedor-leads-valor">{v.leads} leads</span>
+                            <span className="vendedor-leads-unique">({v.uniqueIps} únicos)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Barra de Busca e Ordenação */}
+              {numeros.length > 0 && (
+                <div className="numbers-toolbar">
+                  <div className="search-numeros">
+                    <span className="search-icon">🔍</span>
+                    <input
+                      type="text"
+                      placeholder="Buscar por telefone ou colaborador..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="search-input"
+                    />
+                    {searchTerm && (
+                      <button className="search-clear" onClick={() => setSearchTerm('')}>✕</button>
+                    )}
+                    {(searchTerm || vendedorFiltro) && (
+                      <span className="search-count">{numerosFiltrados.length} de {numeros.length}</span>
+                    )}
+                  </div>
+
+                  {numeros.length > 2 && (
+                    <div className="sort-numeros">
+                      <span className="sort-label">Ordenar:</span>
+                      <select
+                        value={ordenacao}
+                        onChange={(e) => setOrdenacao(e.target.value)}
+                        className="sort-select"
+                      >
+                        <option value="padrao">Padrão</option>
+                        <option value="leads_desc">Mais leads</option>
+                        <option value="vendedor">Vendedor (A-Z)</option>
+                      </select>
+                    </div>
                   )}
                 </div>
               )}
 
-              {/* Alerta: números sem cliques (só mostra se outros números têm tráfego significativo) */}
+              {/* Filtro ativo aviso */}
+              {vendedorFiltro && (
+                <div className="filtro-ativo-banner">
+                  <span>Exibindo telefones de <strong>{vendedorFiltro}</strong> ({numerosFiltrados.length} encontrado{numerosFiltrados.length !== 1 ? 's' : ''})</span>
+                  <button className="btn-remover-filtro-tag" onClick={() => setVendedorFiltro(null)}>Ver todos ✕</button>
+                </div>
+              )}
+
+              {/* Alerta: números sem cliques */}
               {(() => {
                 const ativos = numeros.filter(n => n.ativo !== false);
                 const comCliques = ativos.filter(n => getNumeroStats(n.numero).total > 0);
                 const semCliques = ativos.filter(n => getNumeroStats(n.numero).total === 0);
                 if (semCliques.length === 0) return null;
-                // Calcula mediana de cliques dos números que têm tráfego
                 const cliquesOrdenados = comCliques.map(n => getNumeroStats(n.numero).total).sort((a, b) => a - b);
                 const mediana = cliquesOrdenados.length > 0
                   ? (cliquesOrdenados.length % 2 === 0
                     ? (cliquesOrdenados[cliquesOrdenados.length / 2 - 1] + cliquesOrdenados[cliquesOrdenados.length / 2]) / 2
                     : cliquesOrdenados[Math.floor(cliquesOrdenados.length / 2)])
                   : 0;
-                // Só mostra alerta se há tráfego significativo nos outros números
                 if (mediana < 5) return null;
                 return (
                   <div className="alerta-sem-cliques">
@@ -1532,27 +1726,54 @@ function App() {
                 );
               })()}
 
+              {/* Input Area com campo de colaborador */}
               {canEdit && (
-                <div className="input-area">
-                  <input ref={inputRef} type="text" placeholder="Ex: 48999998888"
-                    value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} />
+                <div className="input-area input-area-enhanced">
+                  <div className="input-field-group">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      placeholder="Telefone (Ex: 48999998888)"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="input-num-field"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Colaborador (Ex: Cindy)"
+                      list="colaboradores-datalist"
+                      value={inputColaborador}
+                      onChange={(e) => setInputColaborador(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="input-colab-field"
+                    />
+                    <datalist id="colaboradores-datalist">
+                      {colaboradoresExistentes.map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
+                  </div>
                   <button className="btn-add" onClick={handleAdd}>+ Adicionar</button>
                 </div>
               )}
 
               <div className="numbers-list">
-                {numerosFiltrados.length === 0 && !searchTerm && (
+                {numerosFiltrados.length === 0 && !searchTerm && !vendedorFiltro && (
                   <div className="empty-msg">Nenhum número cadastrado. Adicione acima.</div>
                 )}
-                {numerosFiltrados.length === 0 && searchTerm && (
-                  <div className="empty-msg">Nenhum número encontrado para "{searchTerm}"</div>
+                {numerosFiltrados.length === 0 && (searchTerm || vendedorFiltro) && (
+                  <div className="empty-msg">
+                    Nenhum número encontrado
+                    {searchTerm && ` para "${searchTerm}"`}
+                    {vendedorFiltro && ` para o vendedor "${vendedorFiltro}"`}.
+                  </div>
                 )}
                 {numerosFiltrados.map((n, idx) => {
                   const st = getNumeroStats(n.numero);
                   const percent = maxCliques > 0 ? (st.total / maxCliques) * 100 : 0;
                   const isAtivo = n.ativo !== false;
                   const semClique = isAtivo && st.total === 0;
-                  // Só marca como warning se há tráfego significativo nos outros números
                   const ativosComCliques = numeros.filter(x => x.ativo !== false && getNumeroStats(x.numero).total > 0);
                   const cliquesOrd = ativosComCliques.map(x => getNumeroStats(x.numero).total).sort((a, b) => a - b);
                   const med = cliquesOrd.length > 0
@@ -1566,13 +1787,55 @@ function App() {
                       <span className="num-index">{idx + 1}.</span>
                       <div className="num-info">
                         <div className="num-top-row">
-                          <span className="num-value">{formatarNumero(n.numero)}</span>
-                          <button className="btn-copy-num" onClick={() => handleCopyNumero(n.numero)}
-                            title="Copiar número">
-                            {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
-                          </button>
-                          <span className="num-redirects">{st.total} cliques · {st.uniqueIps} pessoas</span>
+                          <div className="num-primary-row">
+                            <span className="num-value">{formatarNumero(n.numero)}</span>
+                            <button className="btn-copy-num" onClick={() => handleCopyNumero(n.numero)}
+                              title="Copiar número">
+                              {copiedNumero === n.numero ? '✓' : <CopyIcon size={14} />}
+                            </button>
+
+                            {/* Tag de Colaborador com Edição Inline */}
+                            {editingColabId === n.id ? (
+                              <div className="colab-edit-box">
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  placeholder="Nome do vendedor"
+                                  list="colaboradores-datalist"
+                                  value={editingColabValue}
+                                  onChange={(e) => setEditingColabValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveColaborador(n.id);
+                                    if (e.key === 'Escape') setEditingColabId(null);
+                                  }}
+                                  className="colab-edit-input"
+                                />
+                                <button className="btn-colab-save" onClick={() => handleSaveColaborador(n.id)} title="Salvar">✓</button>
+                                <button className="btn-colab-cancel" onClick={() => setEditingColabId(null)} title="Cancelar">✕</button>
+                              </div>
+                            ) : (
+                              <span
+                                className={`badge-colaborador ${n.colaborador ? 'has-vendedor' : 'no-vendedor'}`}
+                                onClick={() => canEdit && handleStartEditColaborador(n.id, n.colaborador)}
+                                title={canEdit ? 'Clique para alterar colaborador' : 'Colaborador responsável'}
+                              >
+                                <span className="colab-icon">👤</span>
+                                <span className="colab-text">{n.colaborador || 'Atribuir vendedor'}</span>
+                                {canEdit && <span className="colab-edit-icon" title="Editar">✏️</span>}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Indicador Destacado de Leads Recebidos */}
+                          <div className="num-leads-indicator" title={`${st.total} cliques totais e ${st.uniqueIps} pessoas únicas no período`}>
+                            <span className="leads-icon">🎯</span>
+                            <span className="leads-count">{st.total}</span>
+                            <span className="leads-label">leads</span>
+                            <span className="leads-unique">({st.uniqueIps} únicos)</span>
+                          </div>
+
                           {mostrarWarn && <span className="num-warn-badge" title="Sem cliques no período">⚠️</span>}
+
                           {canEdit && (
                             <button
                               className={`btn-toggle ${isAtivo ? 'btn-toggle-on' : 'btn-toggle-off'} ${pendingToggleIds.has(n.id) ? 'btn-toggle-pending' : ''}`}

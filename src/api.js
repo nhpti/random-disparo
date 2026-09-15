@@ -12,14 +12,14 @@ export async function getNumeros(token) {
   return res.json();
 }
 
-export async function addNumero(numero, token) {
+export async function addNumero(numero, token, colaborador) {
   const res = await fetch(`${API}/api/numeros`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ numero }),
+    body: JSON.stringify({ numero, colaborador }),
   });
   if (!res.ok) throw new Error('Erro ao adicionar');
   return res.json();
@@ -35,15 +35,19 @@ export async function deleteNumero(id, token) {
 }
 
 export async function toggleNumero(id, ativo, token) {
+  return updateNumero(id, { ativo }, token);
+}
+
+export async function updateNumero(id, payload, token) {
   const res = await fetch(`${API}/api/numeros/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ ativo }),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Erro ao alterar status');
+  if (!res.ok) throw new Error('Erro ao atualizar número');
   return res.json();
 }
 
@@ -90,14 +94,14 @@ export async function getNumerosBolsa(token) {
   return res.json();
 }
 
-export async function addNumeroBolsa(numero, token) {
+export async function addNumeroBolsa(numero, token, colaborador) {
   const res = await fetch(`${API}/api/numeros-bolsa`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ numero }),
+    body: JSON.stringify({ numero, colaborador }),
   });
   if (!res.ok) throw new Error('Erro ao adicionar');
   return res.json();
@@ -113,15 +117,19 @@ export async function deleteNumeroBolsa(id, token) {
 }
 
 export async function toggleNumeroBolsa(id, ativo, token) {
+  return updateNumeroBolsa(id, { ativo }, token);
+}
+
+export async function updateNumeroBolsa(id, payload, token) {
   const res = await fetch(`${API}/api/numeros-bolsa/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ ativo }),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Erro ao alterar status');
+  if (!res.ok) throw new Error('Erro ao atualizar número');
   return res.json();
 }
 
@@ -168,14 +176,14 @@ export async function getNumerosBolsaFamilia(token) {
   return res.json();
 }
 
-export async function addNumeroBolsaFamilia(numero, token) {
+export async function addNumeroBolsaFamilia(numero, token, colaborador) {
   const res = await fetch(`${API}/api/numeros-bolsa-familia`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ numero }),
+    body: JSON.stringify({ numero, colaborador }),
   });
   if (!res.ok) throw new Error('Erro ao adicionar');
   return res.json();
@@ -191,15 +199,19 @@ export async function deleteNumeroBolsaFamilia(id, token) {
 }
 
 export async function toggleNumeroBolsaFamilia(id, ativo, token) {
+  return updateNumeroBolsaFamilia(id, { ativo }, token);
+}
+
+export async function updateNumeroBolsaFamilia(id, payload, token) {
   const res = await fetch(`${API}/api/numeros-bolsa-familia/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ ativo }),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Erro ao alterar status');
+  if (!res.ok) throw new Error('Erro ao atualizar número');
   return res.json();
 }
 
@@ -225,14 +237,14 @@ export async function getNumerosRenegociacao(token) {
   return res.json();
 }
 
-export async function addNumeroRenegociacao(numero, token) {
+export async function addNumeroRenegociacao(numero, token, colaborador) {
   const res = await fetch(`${API}/api/numeros-renegociacao`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ numero }),
+    body: JSON.stringify({ numero, colaborador }),
   });
   if (!res.ok) throw new Error('Erro ao adicionar');
   return res.json();
@@ -248,15 +260,19 @@ export async function deleteNumeroRenegociacao(id, token) {
 }
 
 export async function toggleNumeroRenegociacao(id, ativo, token) {
+  return updateNumeroRenegociacao(id, { ativo }, token);
+}
+
+export async function updateNumeroRenegociacao(id, payload, token) {
   const res = await fetch(`${API}/api/numeros-renegociacao/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ ativo }),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Erro ao alterar status');
+  if (!res.ok) throw new Error('Erro ao atualizar número');
   return res.json();
 }
 

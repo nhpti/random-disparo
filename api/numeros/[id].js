@@ -45,19 +45,49 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'PATCH') {
-      const { ativo } = req.body;
-      const { data, error } = await supabase
+      const { ativo, colaborador } = req.body;
+      const updates = {};
+      if (ativo !== undefined) updates.ativo = ativo;
+      if (colaborador !== undefined) {
+        updates.colaborador = (colaborador && typeof colaborador === 'string' && colaborador.trim()) ? colaborador.trim() : null;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'Nenhum campo para atualizar' });
+      }
+
+      let { data, error } = await supabase
         .from('numeros')
-        .update({ ativo })
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
-      if (error) throw error;
+
+      if (error && error.message && error.message.includes('colaborador') && updates.ativo !== undefined) {
+        const fallbackRes = await supabase
+          .from('numeros')
+          .update({ ativo: updates.ativo })
+          .eq('id', id)
+          .select()
+          .single();
+        if (fallbackRes.error) throw fallbackRes.error;
+        data = fallbackRes.data;
+        error = null;
+      } else if (error) {
+        throw error;
+      }
 
       // Registrar atividade
+      let acaoLog = 'atualizou';
+      if (ativo !== undefined && colaborador === undefined) {
+        acaoLog = ativo ? 'ativou' : 'pausou';
+      } else if (colaborador !== undefined && ativo === undefined) {
+        acaoLog = updates.colaborador ? `atribuiu a ${updates.colaborador}` : 'removeu colaborador de';
+      }
+
       await supabase.from('activity_log').insert({
         produto: 'fgts',
-        acao: ativo ? 'ativou' : 'pausou',
+        acao: acaoLog,
         numero: data.numero,
         usuario: user.email || 'desconhecido'
       });

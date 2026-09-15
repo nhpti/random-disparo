@@ -3444,3 +3444,506 @@ body.light .top-bar {
     justify-content: space-between;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   FUNCIONALIDADE: COLABORADORES & RESUMO POR VENDEDOR & LEADS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Resumo por Vendedor Section ── */
+.resumo-vendedores-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+}
+
+.resumo-vendedores-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.resumo-vendedores-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resumo-vendedores-title h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.resumo-icon {
+  font-size: 1.15rem;
+}
+
+.resumo-count-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid rgba(66, 165, 245, 0.2);
+}
+
+.btn-clear-vendedor-filtro {
+  background: rgba(239, 83, 80, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(239, 83, 80, 0.3);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-clear-vendedor-filtro:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+/* ── Grid de Vendedores ── */
+.vendedores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.vendedor-card {
+  background: var(--bg-item);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.vendedor-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  background: var(--bg-item-hover);
+}
+
+.vendedor-card-active {
+  border: 2px solid var(--accent) !important;
+  background: var(--accent-light) !important;
+  box-shadow: 0 0 12px rgba(66, 165, 245, 0.25) !important;
+}
+
+.vendedor-card-unassigned {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
+.vendedor-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.vendedor-card-nome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendedor-avatar {
+  font-size: 0.95rem;
+}
+
+.vendedor-nome-text {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.vendedor-total-nums {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: var(--bg-input);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.vendedor-card-stats {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.vendedor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.vendedor-pill-ativo {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(0, 200, 83, 0.2);
+}
+
+.vendedor-pill-pausado {
+  background: rgba(140, 150, 170, 0.12);
+  color: var(--text-muted);
+  border: 1px solid rgba(140, 150, 170, 0.2);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot-green {
+  background: var(--success);
+}
+
+.dot-gray {
+  background: var(--text-muted);
+}
+
+.vendedor-card-leads {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+}
+
+.vendedor-leads-icon {
+  font-size: 0.82rem;
+}
+
+.vendedor-leads-valor {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.vendedor-leads-unique {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ── Toolbar de Números: Busca e Ordenação ── */
+.numbers-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.numbers-toolbar .search-numeros {
+  flex: 1;
+  min-width: 220px;
+  margin-bottom: 0;
+}
+
+.sort-numeros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sort-select {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.sort-select:focus {
+  border-color: var(--border-focus);
+}
+
+/* ── Banner de Filtro Ativo ── */
+.filtro-ativo-banner {
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+}
+
+.btn-remover-filtro-tag {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-remover-filtro-tag:hover {
+  text-decoration: underline;
+}
+
+/* ── Input Area Melhorada (Telefone + Colaborador) ── */
+.input-area-enhanced {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.input-field-group {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.input-num-field {
+  flex: 1.3;
+  min-width: 140px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-colab-field {
+  flex: 1;
+  min-width: 130px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-num-field:focus,
+.input-colab-field:focus {
+  border-color: var(--border-focus);
+}
+
+/* ── Number Item Layout & Badges ── */
+.number-item .num-top-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.num-primary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Badge do Colaborador */
+.badge-colaborador {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.badge-colaborador.has-vendedor {
+  background: rgba(41, 121, 255, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(41, 121, 255, 0.25);
+}
+
+.badge-colaborador.no-vendedor {
+  background: rgba(140, 150, 170, 0.08);
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+}
+
+.badge-colaborador:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+.colab-icon {
+  font-size: 0.8rem;
+}
+
+.colab-text {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.colab-edit-icon {
+  font-size: 0.72rem;
+  opacity: 0.6;
+}
+
+.badge-colaborador:hover .colab-edit-icon {
+  opacity: 1;
+}
+
+/* Edição Inline de Colaborador */
+.colab-edit-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.colab-edit-input {
+  width: 120px;
+  padding: 3px 8px;
+  font-size: 0.76rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.btn-colab-save {
+  background: var(--success);
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-colab-cancel {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: none;
+  border-radius: 5px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* ── Indicador Destacado de Leads Recebidos ── */
+.num-leads-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent-light);
+  border: 1px solid rgba(66, 165, 245, 0.22);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.leads-icon {
+  font-size: 0.85rem;
+}
+
+.leads-count {
+  font-weight: 800;
+  color: var(--accent);
+  font-size: 0.84rem;
+}
+
+.leads-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.leads-unique {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ── Responsividade Mobile ── */
+@media (max-width: 600px) {
+  .vendedores-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .input-field-group {
+    flex-direction: column;
+  }
+
+  .input-num-field,
+  .input-colab-field {
+    width: 100%;
+  }
+
+  .number-item .num-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .num-leads-indicator {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+

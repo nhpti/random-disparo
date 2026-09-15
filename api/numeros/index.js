@@ -17,22 +17,38 @@ module.exports = async function handler(req, res) {
     if (role !== 'admin' && role !== 'operador') return res.status(403).json({ error: 'Sem permissão para esta ação.' });
 
     try {
-      const { numero } = req.body;
+      const { numero, colaborador } = req.body;
       if (!numero || !numero.trim()) {
         return res.status(400).json({ error: 'Número é obrigatório' });
       }
 
-      const { data, error } = await supabase
+      const insertData = { numero: numero.trim() };
+      if (colaborador !== undefined && colaborador !== null && colaborador.trim()) {
+        insertData.colaborador = colaborador.trim();
+      }
+
+      let { data, error } = await supabase
         .from('numeros')
-        .insert({ numero: numero.trim() })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error && error.message && error.message.includes('colaborador')) {
+        const fallbackRes = await supabase
+          .from('numeros')
+          .insert({ numero: numero.trim() })
+          .select()
+          .single();
+        if (fallbackRes.error) throw fallbackRes.error;
+        data = fallbackRes.data;
+        error = null;
+      } else if (error) {
+        throw error;
+      }
 
       await supabase.from('activity_log').insert({
         produto: 'fgts',
-        acao: 'adicionou',
+        acao: colaborador ? `adicionou (colaborador: ${colaborador.trim()})` : 'adicionou',
         numero: numero.trim(),
         usuario: user.email || 'desconhecido'
       });
