@@ -10,6 +10,7 @@
   ],
   "rewrites": [
     { "source": "/fgts", "destination": "/api/fgts" },
+    { "source": "/inss", "destination": "/api/inss" },
     { "source": "/bolsa", "destination": "/api/bolsa" },
     { "source": "/bolsa-familia", "destination": "/api/bolsa-familia" },
     { "source": "/sms-fgts", "destination": "/api/sms-fgts" },

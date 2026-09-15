@@ -1,0 +1,88 @@
+const { supabase } = require('../../lib/supabase');
+const { verifyAuth, verifyAuthWithRole } = require('../../lib/auth');
+
+const TABELA_NUMEROS = 'numeros_inss';
+const PRODUTO = 'inss';
+
+// GET  /api/numeros-inss — listar todos (autenticado)
+// POST /api/numeros-inss — adicionar (admin/operador)
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // POST requer role admin ou operador
+  if (req.method === 'POST') {
+    const { user, role } = await verifyAuthWithRole(req);
+    if (!user) return res.status(401).json({ error: 'Não autorizado. Faça login.' });
+    if (role !== 'admin' && role !== 'operador') return res.status(403).json({ error: 'Sem permissão para esta ação.' });
+
+    try {
+      const { numero, colaborador } = req.body;
+      if (!numero || !numero.trim()) {
+        return res.status(400).json({ error: 'Número é obrigatório' });
+      }
+
+      const insertData = { numero: numero.trim() };
+      if (colaborador !== undefined && colaborador !== null && colaborador.trim()) {
+        insertData.colaborador = colaborador.trim();
+      }
+
+      let { data, error } = await supabase
+        .from(TABELA_NUMEROS)
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error && error.message && error.message.includes('colaborador')) {
+        const fallbackRes = await supabase
+          .from(TABELA_NUMEROS)
+          .insert({ numero: numero.trim() })
+          .select()
+          .single();
+        if (fallbackRes.error) throw fallbackRes.error;
+        data = fallbackRes.data;
+        error = null;
+      } else if (error) {
+        throw error;
+      }
+
+      await supabase.from('activity_log').insert({
+        produto: PRODUTO,
+        acao: colaborador ? `adicionou (colaborador: ${colaborador.trim()})` : 'adicionou',
+        numero: numero.trim(),
+        usuario: user.email || 'desconhecido'
+      });
+
+      return res.status(201).json(data);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erro interno' });
+    }
+  }
+
+  // GET — qualquer usuário autenticado
+  const user = await verifyAuth(req);
+  if (!user) return res.status(401).json({ error: 'Não autorizado. Faça login.' });
+
+  res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
+
+  try {
+    const { data, error } = await supabase
+      .from(TABELA_NUMEROS)
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) {
+      if (error.code === '42P01') {
+        return res.status(200).json([]);
+      }
+      throw error;
+    }
+    return res.status(200).json(data || []);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+};

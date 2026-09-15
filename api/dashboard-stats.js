@@ -30,16 +30,17 @@ module.exports = async function handler(req, res) {
 
     // Rodar TODAS as queries em paralelo
     const [
-      fgtsNums, bolsaNums, bolsaFamNums, renegociacaoNums,
-      fgtsRedirects, bolsaRedirects, bolsaFamRedirects, renegociacaoRedirects,
-      fgtsIpCount, bolsaIpCount, bolsaFamIpCount, renegociacaoIpCount,
-      fgtsRedirectsOntem, bolsaRedirectsOntem, bolsaFamRedirectsOntem, renegociacaoRedirectsOntem,
+      fgtsNums, bolsaNums, bolsaFamNums, renegociacaoNums, inssNums,
+      fgtsRedirects, bolsaRedirects, bolsaFamRedirects, renegociacaoRedirects, inssRedirects,
+      fgtsIpCount, bolsaIpCount, bolsaFamIpCount, renegociacaoIpCount, inssIpCount,
+      fgtsRedirectsOntem, bolsaRedirectsOntem, bolsaFamRedirectsOntem, renegociacaoRedirectsOntem, inssRedirectsOntem,
     ] = await Promise.all([
       // Números
       supabase.from('numeros').select('id, ativo'),
       supabase.from('numeros_bolsa').select('id, ativo'),
       supabase.from('numeros_bolsa_familia').select('id, ativo'),
       supabase.from('numeros_renegociacao').select('id, ativo'),
+      supabase.from('numeros_inss').select('id, ativo'),
       // Redirects hoje (count)
       supabase.from('redirect_log').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioHoje).lte('created_at', fimHoje),
@@ -48,6 +49,8 @@ module.exports = async function handler(req, res) {
       supabase.from('redirect_log_bolsa_familia').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioHoje).lte('created_at', fimHoje),
       supabase.from('redirect_log_renegociacao').select('*', { count: 'exact', head: true })
+        .gte('created_at', inicioHoje).lte('created_at', fimHoje),
+      supabase.from('redirect_log_inss').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioHoje).lte('created_at', fimHoje),
       // IPs hoje
       supabase.from('redirect_log').select('ip')
@@ -62,6 +65,9 @@ module.exports = async function handler(req, res) {
       supabase.from('redirect_log_renegociacao').select('ip')
         .gte('created_at', inicioHoje).lte('created_at', fimHoje)
         .limit(1000),
+      supabase.from('redirect_log_inss').select('ip')
+        .gte('created_at', inicioHoje).lte('created_at', fimHoje)
+        .limit(1000),
       // Redirects ontem (count)
       supabase.from('redirect_log').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioOntem).lte('created_at', fimOntem),
@@ -70,6 +76,8 @@ module.exports = async function handler(req, res) {
       supabase.from('redirect_log_bolsa_familia').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioOntem).lte('created_at', fimOntem),
       supabase.from('redirect_log_renegociacao').select('*', { count: 'exact', head: true })
+        .gte('created_at', inicioOntem).lte('created_at', fimOntem),
+      supabase.from('redirect_log_inss').select('*', { count: 'exact', head: true })
         .gte('created_at', inicioOntem).lte('created_at', fimOntem),
     ]);
 
@@ -101,12 +109,14 @@ module.exports = async function handler(req, res) {
     const bolsaData = bolsaNums.data || [];
     const bolsaFamData = bolsaFamNums.data || [];
     const renegociacaoData = renegociacaoNums.data || [];
+    const inssData = inssNums.data || [];
 
-    const [fgtsUnique, bolsaUnique, bolsaFamUnique, renegociacaoUnique] = await Promise.all([
+    const [fgtsUnique, bolsaUnique, bolsaFamUnique, renegociacaoUnique, inssUnique] = await Promise.all([
       countUniqueIps(fgtsIpCount.data, 'redirect_log', fgtsRedirects.count || 0),
       countUniqueIps(bolsaIpCount.data, 'redirect_log_bolsa', bolsaRedirects.count || 0),
       countUniqueIps(bolsaFamIpCount.data, 'redirect_log_bolsa_familia', bolsaFamRedirects.count || 0),
       countUniqueIps(renegociacaoIpCount.data, 'redirect_log_renegociacao', renegociacaoRedirects.count || 0),
+      countUniqueIps(inssIpCount.data, 'redirect_log_inss', inssRedirects.count || 0),
     ]);
 
     return res.status(200).json({
@@ -137,6 +147,13 @@ module.exports = async function handler(req, res) {
         uniqueHoje: renegociacaoUnique,
         totalNumeros: renegociacaoData.length,
         ativos: renegociacaoData.filter(n => n.ativo !== false).length,
+      },
+      inss: {
+        redirectsHoje: inssRedirects.count || 0,
+        redirectsOntem: inssRedirectsOntem.count || 0,
+        uniqueHoje: inssUnique,
+        totalNumeros: inssData.length,
+        ativos: inssData.filter(n => n.ativo !== false).length,
       },
     });
   } catch (err) {

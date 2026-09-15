@@ -4,6 +4,7 @@ import {
   getNumerosBolsa, addNumeroBolsa, deleteNumeroBolsa, toggleNumeroBolsa, updateNumeroBolsa, getStatsBolsa,
   getNumerosBolsaFamilia, addNumeroBolsaFamilia, deleteNumeroBolsaFamilia, toggleNumeroBolsaFamilia, updateNumeroBolsaFamilia, getStatsBolsaFamilia,
   getNumerosRenegociacao, addNumeroRenegociacao, deleteNumeroRenegociacao, toggleNumeroRenegociacao, updateNumeroRenegociacao, getStatsRenegociacao,
+  getNumerosInss, addNumeroInss, deleteNumeroInss, toggleNumeroInss, updateNumeroInss, getStatsInss,
   getActivityLog, getDashboardStats,
   getMe, getUsuarios, addUsuario, updateUsuarioRole, deleteUsuario,
   getHealthStatus, getRealtimeChart,
@@ -27,6 +28,20 @@ const PRODUTOS = {
     apiStats: getStats,
     testPath: '/api/fgts',
     numerosPath: '/api/numeros',
+  },
+  inss: {
+    nome: 'INSS',
+    path: '/inss',
+    emoji: '🏛️',
+    desc: 'Gerenciador de números ativos — INSS',
+    apiGet: getNumerosInss,
+    apiAdd: addNumeroInss,
+    apiDel: deleteNumeroInss,
+    apiToggle: toggleNumeroInss,
+    apiUpdate: updateNumeroInss,
+    apiStats: getStatsInss,
+    testPath: '/api/inss',
+    numerosPath: '/api/numeros-inss',
   },
   bolsa: {
     nome: 'Randomizador Jeffinho',
@@ -464,10 +479,10 @@ function App() {
     },
     inss: {
       nome: 'INSS',
-      labelMensagem: 'o Crédito INSS',
-      randomizadorKey: 'bolsa-familia',
-      randomizadorNome: 'Bolsa Família',
-      randomizadorEmoji: '👨‍👩‍👧‍👦',
+      labelMensagem: 'o Empréstimo Consignado INSS',
+      randomizadorKey: 'inss',
+      randomizadorNome: 'INSS',
+      randomizadorEmoji: '🏛️',
     },
     'bolsa-familia': {
       nome: 'Bolsa Família',
@@ -782,6 +797,9 @@ function App() {
     ],
     renegociacao: [
       { key: 'b11', label: 'Renegociacao', tipo: 'Principal', codigo: 'b11', path: '', domain: 'https://reneg.nhpbolsa.com' },
+    ],
+    inss: [
+      { key: 'inss1', label: 'INSS Principal', tipo: 'Principal', codigo: 'inss1', path: '/inss' },
     ],
   };
 

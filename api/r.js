@@ -9,7 +9,7 @@ const MAPA_PRODUTOS_TABELAS = {
   'garantia-veicular': 'numeros',
   'bolsa': 'numeros_bolsa',
   'bolsa-familia': 'numeros_bolsa_familia',
-  'inss': 'numeros_bolsa_familia',
+  'inss': 'numeros_inss',
   'renegociacao': 'numeros_renegociacao'
 };
 

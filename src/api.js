@@ -288,6 +288,66 @@ export async function getStatsRenegociacao(token, de, ate) {
   return res.json();
 }
 
+// ── INSS ──
+export async function getNumerosInss(token) {
+  const res = await fetch(`${API}/api/numeros-inss`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar números do INSS');
+  return res.json();
+}
+
+export async function addNumeroInss(numero, token, colaborador) {
+  const res = await fetch(`${API}/api/numeros-inss`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ numero, colaborador }),
+  });
+  if (!res.ok) throw new Error('Erro ao adicionar número do INSS');
+  return res.json();
+}
+
+export async function deleteNumeroInss(id, token) {
+  const res = await fetch(`${API}/api/numeros-inss/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao remover número do INSS');
+  return res.json();
+}
+
+export async function toggleNumeroInss(id, ativo, token) {
+  return updateNumeroInss(id, { ativo }, token);
+}
+
+export async function updateNumeroInss(id, payload, token) {
+  const res = await fetch(`${API}/api/numeros-inss/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Erro ao atualizar número do INSS');
+  return res.json();
+}
+
+export async function getStatsInss(token, de, ate) {
+  const params = [];
+  if (de) params.push(`de=${de}`);
+  if (ate) params.push(`ate=${ate}`);
+  const query = params.length ? `?${params.join('&')}` : '';
+  const res = await fetch(`${API}/api/stats-inss${query}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Erro ao buscar stats do INSS');
+  return res.json();
+}
+
 export async function getActivityLog(token, produto) {
   const query = produto ? `?produto=${produto}` : '';
   const res = await fetch(`${API}/api/activity-log${query}`, {
